@@ -8,6 +8,8 @@
 #include "main_menu.h"
 #include "player.h"
 #include "title_screen.h"
+#include "character.h"
+#include "gear.h"
 
 
 /**
