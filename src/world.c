@@ -1,4 +1,4 @@
-#pragma bank 18
+#pragma bank 23
 
 #include "world.h"
 #include "map.h"

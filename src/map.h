@@ -1,4 +1,4 @@
-#ifndef _MAP_H
+﻿#ifndef _MAP_H
 #define _MAP_H
 
 #include <gb/gb.h>
@@ -666,7 +666,7 @@ typedef struct Lever {
    * Custom callback to execute when the lever is pulled.
    * @param lever The lever being pulled.
    */
-  const void (*on_pull)(const struct Lever *lever);
+  void (*on_pull)(const struct Lever *lever);
 } Lever;
 
 /**
@@ -895,31 +895,31 @@ typedef struct Floor {
    * Called when the map is initialized (happens on load, after battles, etc.).
    * @return `true` if the map should prevent default behavior.
    */
-  const bool (*on_init)(void);
+  bool (*on_init)(void);
   /**
    * Called when the map is active and the player moves into a special tile.
    * @return `true` if the map should prevent default behavior.
    */
-  const bool (*on_special)(void);
+  bool (*on_special)(void);
   /**
    * Called when the map is active and the player moves into a floor tile.
    * @return `true` if the map should prevent default behavior.
    */
-  const bool (*on_move)(void);
+  bool (*on_move)(void);
   /**
    * Called when the player presses the 'A' button on the map. Allows for custom
    * action scripting.
    * @return `true` if the map should prevent default behavior.
    */
-  const bool (*on_action)(void);
+  bool (*on_action)(void);
   /**
    * Called when the floor is loaded.
    */
-  const void (*on_load)(void);
+  void (*on_load)(void);
   /**
    * Called on render frames to update graphics for the floor.
    */
-  const void (*on_draw)(void);
+  void (*on_draw)(void);
 } Floor;
 
 /**
@@ -1594,3 +1594,4 @@ void remap_exit(
 );
 
 #endif
+

@@ -49,19 +49,19 @@ static void update_cursor(void) {
     break;
   case MAP_MENU_CURSOR_CHARACTER:
     sx = 16 - 2;
-    sy = CURSOR_Y + 8;
+    sy = CURSOR_Y - 24;
     break;
   case MAP_MENU_CURSOR_GEAR:
     sx = 16 - 2;
-    sy = CURSOR_Y + 16;
+    sy = CURSOR_Y - 48;
     break;
   case MAP_MENU_CURSOR_SETTINGS:
     sx = 16 - 2;
-    sy = CURSOR_Y + 24;
+    sy = CURSOR_Y - 72;
     break;
   default:
     sx = 100 - 2;
-    sy = CURSOR_Y + 32;
+    sy = CURSOR_Y - 96;
     break;
   }
 

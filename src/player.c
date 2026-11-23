@@ -951,7 +951,7 @@ void update_player_stats(void) {
 /**
  * Sets the class abilities for the given class: ability 0 plus null abilities.
  */
-static void set_class_ability_list(PlayerClass cls, const Ability *ability0) {
+static void set_class_ability_list(const Ability *ability0) {
   class_abilities[0] = ability0;
   for (uint8_t k = 1; k < MAX_ABILITIES; k++)
     class_abilities[k] = &null_ability;
@@ -995,49 +995,49 @@ void set_class_abilities(void) {
     class_abilities[5] = &sorcerer5;
     break;
   case CLASS_TEST:
-    set_class_ability_list(CLASS_TEST, &test_class0);
+    set_class_ability_list(&test_class0);
     break;
   case CLASS_ROGUE:
-    set_class_ability_list(CLASS_ROGUE, &ROGUE0);
+    set_class_ability_list(&ROGUE0);
     break;
   case CLASS_RANGER:
-    set_class_ability_list(CLASS_RANGER, &RANGER0);
+    set_class_ability_list(&RANGER0);
     break;
   case CLASS_KNIGHT:
-    set_class_ability_list(CLASS_KNIGHT, &KNIGHT0);
+    set_class_ability_list(&KNIGHT0);
     break;
   case CLASS_WIZARD:
-    set_class_ability_list(CLASS_WIZARD, &WIZARD0);
+    set_class_ability_list(&WIZARD0);
     break;
   case CLASS_PALADIN:
-    set_class_ability_list(CLASS_PALADIN, &PALADIN0);
+    set_class_ability_list(&PALADIN0);
     break;
   case CLASS_CLERIC:
-    set_class_ability_list(CLASS_CLERIC, &CLERIC0);
+    set_class_ability_list(&CLERIC0);
     break;
   case CLASS_BARD:
-    set_class_ability_list(CLASS_BARD, &BARD0);
+    set_class_ability_list(&BARD0);
     break;
   case CLASS_NECROMANCER:
-    set_class_ability_list(CLASS_NECROMANCER, &NECROMANCER0);
+    set_class_ability_list(&NECROMANCER0);
     break;
   case CLASS_ASSASSIN:
-    set_class_ability_list(CLASS_ASSASSIN, &ASSASSIN0);
+    set_class_ability_list(&ASSASSIN0);
     break;
   case CLASS_DRAGOON:
-    set_class_ability_list(CLASS_DRAGOON, &DRAGOON0);
+    set_class_ability_list(&DRAGOON0);
     break;
   case CLASS_SHAMAN:
-    set_class_ability_list(CLASS_SHAMAN, &SHAMAN0);
+    set_class_ability_list(&SHAMAN0);
     break;
   case CLASS_WARLOCK:
-    set_class_ability_list(CLASS_WARLOCK, &WARLOCK0);
+    set_class_ability_list(&WARLOCK0);
     break;
   case CLASS_STALKER:
-    set_class_ability_list(CLASS_STALKER, &STALKER0);
+    set_class_ability_list(&STALKER0);
     break;
   case CLASS_MARAUDER:
-    set_class_ability_list(CLASS_MARAUDER, &MARAUDER0);
+    set_class_ability_list(&MARAUDER0);
     break;
   }
 }
@@ -1230,3 +1230,4 @@ void generic_base_attack(void) {
   damage_monster(get_player_damage(player.level, C_TIER), DAMAGE_PHYSICAL);
   battle_sfx = sfx_melee_attack;
 }
+

@@ -1,4 +1,4 @@
-#ifndef _CORE_H
+﻿#ifndef _CORE_H
 #define _CORE_H
 
 #include <gb/gb.h>
@@ -487,7 +487,7 @@ typedef struct Core {
    * @param s Tileset to load.
    * @param dst Destination pointer in VRAM.
    */
-  const void (*load_tileset)(const Tileset *s, uint8_t *dst);
+  void (*load_tileset)(const Tileset *s, uint8_t *dst);
   /**
    * Loads a number of tiles from a tileset.
    * @param s Tileset to load.
@@ -495,40 +495,40 @@ typedef struct Core {
    * @param o Tile data offset (in tiles).
    * @param n Number of tiles to write.
    */
-  const void (*load_tiles)(const Tileset *s, uint8_t *dst, uint8_t o, uint8_t n);
+  void (*load_tiles)(const Tileset *s, uint8_t *dst, uint8_t o, uint8_t n);
   /**
    * Loads the core battle tileset.
    */
-  const void (*load_battle_tiles)(void);
+  void (*load_battle_tiles)(void);
   /**
    * Loads the core font tileset.
    */
-  const void (*load_font)(void);
+  void (*load_font)(void);
   /**
    * Loads the font tiles for the given player class.
    */
-  const void (*load_hero_tiles)(uint8_t player_class);
+  void (*load_hero_tiles)(uint8_t player_class);
   /**
    * Loads all hero tiles.
    */
-  const void (*load_all_heros)(void);
+  void (*load_all_heros)(void);
   /**
    * Loads the map objects tileset.
    */
-  const void (*load_object_tiles)(void);
+  void (*load_object_tiles)(void);
   /**
    * Draws a tilemap at the given location.
    * @param m Tilemap to load.
    * @param vram Destination pointer in VRAM.
    */
-  const void (*draw_tilemap)(Tilemap s, uint8_t *dst);
+  void (*draw_tilemap)(Tilemap s, uint8_t *dst);
   /**
    * Loads the given palette into the background palette set.
    * @param data Palette data to load.
    * @param index Starting palette index.
    * @param n Number of palettes to load.
    */
-  const void (*load_bg_palette)(
+  void (*load_bg_palette)(
     const palette_color_t *data, uint8_t index, uint8_t n);
   /**
    * Loads the given palette into the foreground palette set.
@@ -536,28 +536,28 @@ typedef struct Core {
    * @param index Starting palette index.
    * @param n Number of palettes to load.
    */
-  const void (*load_sprite_palette)(
+  void (*load_sprite_palette)(
     const palette_color_t *data, uint8_t index, uint8_t n);
   /**
    * Fill the background with the given tile and attribute.
    * @param tile Tile to fill.
    * @param attr Attribute to fill.
    */
-  const void (*fill_bg)(uint8_t tile_id, uint8_t attr);
+  void (*fill_bg)(uint8_t tile_id, uint8_t attr);
   /**
    * Draws text to the given VRAM location.
    * @param vram Pointer to VRAM where the text tiles should be written.
    * @param text The text to write.
    * @param max Maximum length for the text. Clears unused characters with spaces.
    */
-  const void (*draw_text)(uint8_t *vram, const char *text, uint8_t max);
+  void (*draw_text)(uint8_t *vram, const char *text, uint8_t max);
   /**
    * Prints a fraction to the screen at the given vram location.
    * @param vram Vram location to print the fraction.
    * @param n Numerator for the fraction.
    * @param d Denominator for the fraction.
    */
-  const void (*print_fraction)(uint8_t *vram, uint16_t n, uint16_t d);
+  void (*print_fraction)(uint8_t *vram, uint16_t n, uint16_t d);
   /**
    * Fills a rect with the given tiles and attributes.
    * @param vram Vram location to begin the fill.
@@ -566,22 +566,22 @@ typedef struct Core {
    * @param tile Tile to fill.
    * @param attr Attribute to fill.
    */
-  const void (*fill)(
+  void (*fill)(
     uint8_t *vram, uint8_t w, uint8_t h, uint8_t tile, uint8_t attr);
   /**
    * Loads the dungeon tileset.
    */
-  const void (*load_dungeon_tiles)(void);
+  void (*load_dungeon_tiles)(void);
   /**
    * Loads monster tiles.
    * @param tiles Which monster tiles to load.
    * @param pos Position where the sprites should be loaded.
    */
-  const void (*load_monster_tiles)(MonsterTiles tiles, MonsterTilePosition pos);
+  void (*load_monster_tiles)(MonsterTiles tiles, MonsterTilePosition pos);
   /**
    * Loads tiles for the title screen.
    */
-  const void (*load_title_tiles)(void);
+  void (*load_title_tiles)(void);
 } Core;
 
 /**
@@ -615,3 +615,4 @@ inline void clear_debug(void) {
 }
 
 #endif
+

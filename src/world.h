@@ -42,7 +42,12 @@
 /**
  * Bank in which the world zone data resides (see world_zones.c).
  */
-#define WORLD_DATA_BANK 18
+#define WORLD_ZONE_DATA_BANK 28
+
+/**
+ * Bank in which the tower data resides (see world_tower.c).
+ */
+#define WORLD_TOWER_DATA_BANK 26
 
 /**
  * Enumeration of world biomes.

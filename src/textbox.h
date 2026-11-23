@@ -1,4 +1,4 @@
-#ifndef _TEXTBOX_H
+﻿#ifndef _TEXTBOX_H
 #define _TEXTBOX_H
 
 #include "text_writer.h"
@@ -20,15 +20,15 @@ typedef struct TextBox {
   /**
    * Initializes the text box.
    */
-  const void (*init)(void);
+  void (*init)(void);
   /**
    * Opens the textbox and starts printing the given text.
    */
-  const void (*open)(const char *text);
+  void (*open)(const char *text);
   /**
    * Called to render updates for the textbox.
    */
-  const void (*update)(void);
+  void (*update)(void);
   /**
    * Current state of the textbox.
    */
@@ -55,3 +55,4 @@ extern TextBox textbox;
 extern const palette_color_t textbox_palette[4];
 
 #endif
+
