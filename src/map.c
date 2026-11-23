@@ -13,6 +13,7 @@
 #include "floor.h"
 #include "map.h"
 #include "sound.h"
+#include "world.h"
 
 Exit active_exit;
 MapState map_state;
@@ -312,11 +313,13 @@ static void load_floor(FloorBank *f) NONBANKED {
   list_copy(floor->sconces, sconces, MAX_SCONCES, sizeof(Sconce));
   list_copy(floor->npcs, npcs, MAX_NPCS, sizeof(NPC));
 
-  core.load_bg_palette(floor->palettes, 0, 7);
-  palette_color_t *color = floor->palettes;
-  palette_color_t *local_color = floor_palettes;
-  for (uint8_t k = 0; k < 7 * 4; k++, local_color++, color++)
-    *local_color = *color;
+  if (floor->palettes != NULL) {
+    core.load_bg_palette(floor->palettes, 0, 7);
+    palette_color_t *color = floor->palettes;
+    palette_color_t *local_color = floor_palettes;
+    for (uint8_t k = 0; k < 7 * 4; k++, local_color++, color++)
+      *local_color = *color;
+  }
 
   init_random = true;
 
@@ -333,7 +336,7 @@ static bool on_init(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   bool value;
   SWITCH_ROM(floor_bank->bank);
-  value = floor_bank->floor->on_init();
+  value = floor_bank->floor->on_init ? floor_bank->floor->on_init() : false;
   SWITCH_ROM(_prev_bank);
   return value;
 }
@@ -345,7 +348,7 @@ static bool on_move(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   bool value;
   SWITCH_ROM(floor_bank->bank);
-  value = floor_bank->floor->on_move();
+  value = floor_bank->floor->on_move ? floor_bank->floor->on_move() : false;
   SWITCH_ROM(_prev_bank);
   return value;
 }
@@ -357,7 +360,7 @@ static bool on_special(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   bool value;
   SWITCH_ROM(floor_bank->bank);
-  value = floor_bank->floor->on_special();
+  value = floor_bank->floor->on_special ? floor_bank->floor->on_special() : false;
   SWITCH_ROM(_prev_bank);
   return value;
 }
@@ -369,7 +372,7 @@ static bool on_action(void) NONBANKED {
   const uint8_t _prev_bank = CURRENT_BANK;
   bool value;
   SWITCH_ROM(floor_bank->bank);
-  value = floor_bank->floor->on_action();
+  value = floor_bank->floor->on_action ? floor_bank->floor->on_action() : false;
   SWITCH_ROM(_prev_bank);
   return value;
 }
@@ -2321,6 +2324,7 @@ static bool check_action(void) {
 
 void set_active_floor(FloorBank *f) BANKED {
   load_floor(f);
+  world_on_load_floor(f);
   active_map = &maps[0];
   set_hero_position(default_x, default_y);
   reset_map_objects();

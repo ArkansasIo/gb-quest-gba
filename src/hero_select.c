@@ -11,6 +11,7 @@
 #include "player.h"
 #include "map.h"
 #include "sound.h"
+#include "world.h"
 
 #define HERO_OFFSET_X 8 + 33
 #define HERO_OFFSET_Y 78 + 8
@@ -99,7 +100,7 @@ void start_game(void) NONBANKED {
     move_sprite(k, 0, 0);
 
   init_player(selected_hero);
-  set_active_floor(&bank_floor1);
+  world_enter_zone(0);
   init_world_map();
 
   game_state = GAME_STATE_WORLD_MAP;
