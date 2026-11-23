@@ -12,6 +12,9 @@
 #include "stats.h"
 #include "test.h"
 #include "title_screen.h"
+#include "character.h"
+#include "gear.h"
+#include "settings.h"
 
 GameState game_state = GAME_STATE_TITLE;
 uint8_t joypad_down;
@@ -90,6 +93,15 @@ static inline void game_loop(void) {
   case GAME_STATE_WORLD_MAP:
     update_world_map();
     break;
+  case GAME_STATE_CHARACTER:
+    update_character_screen();
+    break;
+  case GAME_STATE_GEAR:
+    gear_update();
+    break;
+  case GAME_STATE_SETTINGS:
+    settings_update();
+    break;
   case GAME_STATE_BATTLE:
     update_battle();
     break;
@@ -106,6 +118,15 @@ static inline void render(void) {
   switch (game_state) {
   case GAME_STATE_WORLD_MAP:
     draw_world_map();
+    break;
+  case GAME_STATE_CHARACTER:
+    draw_character_screen();
+    break;
+  case GAME_STATE_GEAR:
+    gear_draw();
+    break;
+  case GAME_STATE_SETTINGS:
+    settings_draw();
     break;
   case GAME_STATE_BATTLE:
     draw_battle();

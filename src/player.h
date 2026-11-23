@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "creation.h"
+#include "gear.h"
 #include "map.h"
 
 /**
@@ -23,8 +25,27 @@ typedef enum PlayerClass {
   CLASS_FIGHTER = 1,
   CLASS_MONK = 2,
   CLASS_SORCERER = 3,
+  CLASS_ROGUE = 4,
+  CLASS_RANGER = 5,
+  CLASS_KNIGHT = 6,
+  CLASS_WIZARD = 7,
+  CLASS_PALADIN = 8,
+  CLASS_CLERIC = 9,
+  CLASS_BARD = 10,
+  CLASS_NECROMANCER = 11,
+  CLASS_ASSASSIN = 12,
+  CLASS_DRAGOON = 13,
+  CLASS_SHAMAN = 14,
+  CLASS_WARLOCK = 15,
+  CLASS_STALKER = 16,
+  CLASS_MARAUDER = 17,
   CLASS_TEST = 0xFF,
 } PlayerClass;
+
+/**
+ * Number of playable player classes.
+ */
+#define CLASS_COUNT 18
 
 /**
  * Flags that determine if a player has a given ability.
@@ -244,6 +265,15 @@ typedef struct Player {
    * Number of turns the player is tripped and prone.
    */
   uint8_t trip_turns;
+  /**
+   * The player's race.
+   */
+  Race race;
+  /**
+   * Equipped gear; one entry per gear slot. Stores the equipping item's id or
+   * `ITEM_INVALID` when the slot is empty.
+   */
+  uint8_t gear[GEAR_SLOT_COUNT];
 } Player;
 
 /**
@@ -251,6 +281,16 @@ typedef struct Player {
  * etc.) to handle player related logic and graphics.
  */
 extern Player player;
+
+/**
+ * Names of all player classes.
+ */
+extern const char *player_class_names[CLASS_COUNT];
+
+/**
+ * Basic attack for the player classes. Used by new classes' ability 0.
+ */
+void generic_base_attack(void);
 
 /**
  * All abilities for the current player class.
@@ -398,6 +438,21 @@ inline bool has_special(SpecialFlags s) {
 extern const palette_color_t hero_colors[];
 
 // Ability prototypes and externs
+
+extern const Ability ROGUE0;
+extern const Ability RANGER0;
+extern const Ability KNIGHT0;
+extern const Ability WIZARD0;
+extern const Ability PALADIN0;
+extern const Ability CLERIC0;
+extern const Ability BARD0;
+extern const Ability NECROMANCER0;
+extern const Ability ASSASSIN0;
+extern const Ability DRAGOON0;
+extern const Ability SHAMAN0;
+extern const Ability WARLOCK0;
+extern const Ability STALKER0;
+extern const Ability MARAUDER0;
 
 void druid_base_attack(void);
 void druid_cure_wounds(void);

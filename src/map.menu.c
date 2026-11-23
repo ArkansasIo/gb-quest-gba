@@ -4,6 +4,9 @@
 
 #include "map.h"
 #include "player.h"
+#include "character.h"
+#include "gear.h"
+#include "settings.h"
 #include "sound.h"
 
 #define MAP_MENU_X 0x00
@@ -38,13 +41,29 @@ const palette_color_t main_menu_palette[] = {
 static const Tilemap map_menu_tilemap = { 20, 18, BANK_1, tilemap_map_menu };
 
 static void update_cursor(void) {
-  uint8_t sx;
-  const uint8_t sy = CURSOR_Y;
-
-  if (map_menu.cursor == MAP_MENU_CURSOR_SAVE)
-    sx = CURSOR_X_SAVE;
-  else
-    sx = CURSOR_X_QUIT;
+  uint8_t sx, sy;
+  switch (map_menu.cursor) {
+  case MAP_MENU_CURSOR_SAVE:
+    sx = 16 - 2;
+    sy = CURSOR_Y;
+    break;
+  case MAP_MENU_CURSOR_CHARACTER:
+    sx = 16 - 2;
+    sy = CURSOR_Y + 8;
+    break;
+  case MAP_MENU_CURSOR_GEAR:
+    sx = 16 - 2;
+    sy = CURSOR_Y + 16;
+    break;
+  case MAP_MENU_CURSOR_SETTINGS:
+    sx = 16 - 2;
+    sy = CURSOR_Y + 24;
+    break;
+  default:
+    sx = 100 - 2;
+    sy = CURSOR_Y + 32;
+    break;
+  }
 
   move_sprite(CURSOR_SPRITE_ID + 0, sx, sy);
   move_sprite(CURSOR_SPRITE_ID + 1, sx + 8, sy);
@@ -140,6 +159,11 @@ void show_map_menu(void) {
 
   core.load_bg_palette(main_menu_palette, 7, 1);
   clear_map_sprites();
+  core.draw_text(VRAM_WINDOW_XY(2, 2), "SAVE", 4);
+  core.draw_text(VRAM_WINDOW_XY(2, 3), "CHARACTER", 9);
+  core.draw_text(VRAM_WINDOW_XY(2, 4), "GEAR", 4);
+  core.draw_text(VRAM_WINDOW_XY(2, 5), "SETTINGS", 8);
+  core.draw_text(VRAM_WINDOW_XY(2, 6), "QUIT", 4);
   update_cursor();
 
   play_sound(sfx_next_round);
@@ -158,9 +182,35 @@ void update_map_menu(void) {
   if (map_menu.state == MAP_MENU_CLOSED)
     return;
 
-  if (was_pressed(J_START) || was_pressed(J_B) || was_pressed(J_A)) {
+  if (was_pressed(J_UP)) {
     play_sound(sfx_menu_move);
-    hide_map_menu();
-    return;
+    map_menu.cursor = (map_menu.cursor + MAP_MENU_CURSOR_COUNT - 1) % MAP_MENU_CURSOR_COUNT;
+    update_cursor();
+  } else if (was_pressed(J_DOWN)) {
+    play_sound(sfx_menu_move);
+    map_menu.cursor = (map_menu.cursor + 1) % MAP_MENU_CURSOR_COUNT;
+    update_cursor();
+  }
+
+  if (was_pressed(J_START) || was_pressed(J_B) || was_pressed(J_A)) {
+    switch (map_menu.cursor) {
+    case MAP_MENU_CURSOR_CHARACTER:
+      play_sound(sfx_menu_move);
+      init_character_screen();
+      game_state = GAME_STATE_CHARACTER;
+      break;
+    case MAP_MENU_CURSOR_GEAR:
+      play_sound(sfx_menu_move);
+      gear_open();
+      break;
+    case MAP_MENU_CURSOR_SETTINGS:
+      play_sound(sfx_menu_move);
+      settings_open();
+      break;
+    default:
+      play_sound(sfx_menu_move);
+      hide_map_menu();
+      break;
+    }
   }
 }

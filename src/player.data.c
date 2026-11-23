@@ -28,6 +28,21 @@ const palette_color_t hero_colors[16] = {
 
 //------------------------------------------------------------------------------
 
+const Ability ROGUE0 = { 25, "Strike", TARGET_SELF, 6, generic_base_attack };
+const Ability RANGER0 = { 26, "Aim", TARGET_SELF, 6, generic_base_attack };
+const Ability KNIGHT0 = { 27, "Slam", TARGET_SELF, 6, generic_base_attack };
+const Ability WIZARD0 = { 28, "Zap", TARGET_SELF, 6, generic_base_attack };
+const Ability PALADIN0 = { 29, "Smite", TARGET_SELF, 6, generic_base_attack };
+const Ability CLERIC0 = { 30, "Touch", TARGET_SELF, 6, generic_base_attack };
+const Ability BARD0 = { 31, "Song", TARGET_SELF, 6, generic_base_attack };
+const Ability NECROMANCER0 = { 32, "Wrath", TARGET_SELF, 6, generic_base_attack };
+const Ability ASSASSIN0 = { 33, "Strike", TARGET_SELF, 6, generic_base_attack };
+const Ability DRAGOON0 = { 34, "Pounce", TARGET_SELF, 6, generic_base_attack };
+const Ability SHAMAN0 = { 35, "Totem", TARGET_SELF, 6, generic_base_attack };
+const Ability WARLOCK0 = { 36, "Darkbolt", TARGET_SELF, 6, generic_base_attack };
+const Ability STALKER0 = { 37, "Strike", TARGET_SELF, 6, generic_base_attack };
+const Ability MARAUDER0 = { 38, "Rampage", TARGET_SELF, 6, generic_base_attack };
+
 const Ability druid0 = {
   1, str_ability_druid_cure_wounds,
   TARGET_SELF, 4, druid_cure_wounds,

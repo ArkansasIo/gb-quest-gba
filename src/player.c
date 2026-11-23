@@ -16,6 +16,25 @@
 #include "strings.h"
 
 Player player = { "", CLASS_TEST };
+
+const RaceDef races[RACE_COUNT] = {
+  { "Human", 0, 0, 0, 0, 0, 0 },
+  { "Elf", 0, 0, 0, 1, 1, 0 },
+  { "Dwarf", 1, 0, 1, 0, 0, 0 },
+  { "Orc", 1, 1, 1, 0, 0, 0 },
+  { "Halfling", 0, 0, 0, 1, 0, 1 },
+  { "Gnome", 0, 0, 0, 0, 1, 1 },
+  { "Fairy", 0, 0, 0, 0, 2, 1 },
+  { "Centaur", 2, 1, 0, 0, 0, 0 },
+  { "Dragonborn", 0, 2, 0, 0, 1, 0 },
+};
+
+const char *player_class_names[CLASS_COUNT] = {
+  "Druid", "Fighter", "Monk", "Sorcerer",
+  "Rogue", "Ranger", "Knight", "Wizard", "Paladin", "Cleric",
+  "Bard", "Necromancer", "Assassin", "Dragoon", "Shaman", "Warlock",
+  "Stalker", "Marauder",
+};
 const Ability *class_abilities[6];
 const Ability *player_abilities[6];
 uint8_t player_num_abilities = 0;
@@ -884,7 +903,58 @@ void update_player_stats(void) {
   case CLASS_TEST:
     test_class_update_stats();
     break;
+  case CLASS_ROGUE:
+    update_stats(B_TIER, A_TIER, B_TIER, B_TIER, B_TIER, B_TIER, A_TIER);
+    break;
+  case CLASS_RANGER:
+    update_stats(A_TIER, B_TIER, B_TIER, A_TIER, B_TIER, B_TIER, A_TIER);
+    break;
+  case CLASS_KNIGHT:
+    update_stats(A_TIER, B_TIER, A_TIER, A_TIER, B_TIER, B_TIER, B_TIER);
+    break;
+  case CLASS_WIZARD:
+    update_stats(B_TIER, A_TIER, B_TIER, B_TIER, A_TIER, A_TIER, B_TIER);
+    break;
+  case CLASS_PALADIN:
+    update_stats(A_TIER, B_TIER, B_TIER, A_TIER, B_TIER, B_TIER, B_TIER);
+    break;
+  case CLASS_CLERIC:
+    update_stats(A_TIER, A_TIER, B_TIER, B_TIER, A_TIER, B_TIER, A_TIER);
+    break;
+  case CLASS_BARD:
+    update_stats(B_TIER, B_TIER, B_TIER, B_TIER, A_TIER, B_TIER, A_TIER);
+    break;
+  case CLASS_NECROMANCER:
+    update_stats(B_TIER, A_TIER, B_TIER, B_TIER, A_TIER, B_TIER, B_TIER);
+    break;
+  case CLASS_ASSASSIN:
+    update_stats(B_TIER, A_TIER, B_TIER, B_TIER, B_TIER, B_TIER, A_TIER);
+    break;
+  case CLASS_DRAGOON:
+    update_stats(B_TIER, B_TIER, A_TIER, B_TIER, B_TIER, B_TIER, A_TIER);
+    break;
+  case CLASS_SHAMAN:
+    update_stats(A_TIER, B_TIER, B_TIER, B_TIER, B_TIER, A_TIER, B_TIER);
+    break;
+  case CLASS_WARLOCK:
+    update_stats(B_TIER, A_TIER, B_TIER, B_TIER, A_TIER, A_TIER, B_TIER);
+    break;
+  case CLASS_STALKER:
+    update_stats(B_TIER, A_TIER, B_TIER, B_TIER, B_TIER, B_TIER, A_TIER);
+    break;
+  case CLASS_MARAUDER:
+    update_stats(A_TIER, B_TIER, A_TIER, A_TIER, B_TIER, B_TIER, B_TIER);
+    break;
   }
+}
+
+/**
+ * Sets the class abilities for the given class: ability 0 plus null abilities.
+ */
+static void set_class_ability_list(PlayerClass cls, const Ability *ability0) {
+  class_abilities[0] = ability0;
+  for (uint8_t k = 1; k < MAX_ABILITIES; k++)
+    class_abilities[k] = &null_ability;
 }
 
 /**
@@ -925,12 +995,49 @@ void set_class_abilities(void) {
     class_abilities[5] = &sorcerer5;
     break;
   case CLASS_TEST:
-    class_abilities[0] = &test_class0;
-    class_abilities[1] = &test_class1;
-    class_abilities[2] = &test_class2;
-    class_abilities[3] = &test_class3;
-    class_abilities[4] = &test_class4;
-    class_abilities[5] = &test_class5;
+    set_class_ability_list(CLASS_TEST, &test_class0);
+    break;
+  case CLASS_ROGUE:
+    set_class_ability_list(CLASS_ROGUE, &ROGUE0);
+    break;
+  case CLASS_RANGER:
+    set_class_ability_list(CLASS_RANGER, &RANGER0);
+    break;
+  case CLASS_KNIGHT:
+    set_class_ability_list(CLASS_KNIGHT, &KNIGHT0);
+    break;
+  case CLASS_WIZARD:
+    set_class_ability_list(CLASS_WIZARD, &WIZARD0);
+    break;
+  case CLASS_PALADIN:
+    set_class_ability_list(CLASS_PALADIN, &PALADIN0);
+    break;
+  case CLASS_CLERIC:
+    set_class_ability_list(CLASS_CLERIC, &CLERIC0);
+    break;
+  case CLASS_BARD:
+    set_class_ability_list(CLASS_BARD, &BARD0);
+    break;
+  case CLASS_NECROMANCER:
+    set_class_ability_list(CLASS_NECROMANCER, &NECROMANCER0);
+    break;
+  case CLASS_ASSASSIN:
+    set_class_ability_list(CLASS_ASSASSIN, &ASSASSIN0);
+    break;
+  case CLASS_DRAGOON:
+    set_class_ability_list(CLASS_DRAGOON, &DRAGOON0);
+    break;
+  case CLASS_SHAMAN:
+    set_class_ability_list(CLASS_SHAMAN, &SHAMAN0);
+    break;
+  case CLASS_WARLOCK:
+    set_class_ability_list(CLASS_WARLOCK, &WARLOCK0);
+    break;
+  case CLASS_STALKER:
+    set_class_ability_list(CLASS_STALKER, &STALKER0);
+    break;
+  case CLASS_MARAUDER:
+    set_class_ability_list(CLASS_MARAUDER, &MARAUDER0);
     break;
   }
 }
@@ -1040,20 +1147,10 @@ void set_player_level(uint8_t level) BANKED {
 void init_player(PlayerClass player_class) BANKED {
   player.player_class = player_class;
 
-  switch (player.player_class) {
-  case CLASS_DRUID:
-    sprintf(player.name, "Lyra");
-    break;
-  case CLASS_FIGHTER:
-    sprintf(player.name, "Deneth");
-    break;
-  case CLASS_MONK:
-    sprintf(player.name, "Ken");
-    break;
-  case CLASS_SORCERER:
-    sprintf(player.name, "Tyrion");
-    break;
-  }
+  if (player.player_class < CLASS_COUNT)
+    sprintf(player.name, player_class_names[player.player_class]);
+
+  player.race = RACE_HUMAN;
 
   player.has_torch = false;
   player.magic_keys = 0;
@@ -1064,6 +1161,11 @@ void init_player(PlayerClass player_class) BANKED {
 
   grant_ability(ABILITY_0);
   set_player_level(4);
+
+  for (uint8_t k = 0; k < GEAR_SLOT_COUNT; k++)
+    player.gear[k] = ITEM_INVALID;
+  update_gear_stats();
+
   reset_player_stats();
 
   player.message_speed = AUTO_PAGE_MED;
@@ -1112,4 +1214,19 @@ void player_base_attack(void) BANKED {
 
 void player_use_ability(const Ability *ability) BANKED {
   ability->execute();
+}
+
+void generic_base_attack(void) {
+  Monster *target = encounter.target;
+
+  if (!target)
+    return;
+
+  if (!roll_attack_player(player.atk, target->def)) {
+    PLAYER_MISS;
+    return;
+  }
+
+  damage_monster(get_player_damage(player.level, C_TIER), DAMAGE_PHYSICAL);
+  battle_sfx = sfx_melee_attack;
 }
