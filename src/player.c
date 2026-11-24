@@ -194,10 +194,15 @@ static uint8_t damage_all(
   DamageAspect type
 ) {
   uint8_t dam_roll = d16();
-  uint16_t damage = calc_damage(dam_roll, base_damage);
+  uint32_t damage_total = calc_damage(dam_roll, base_damage);
 
   if (has_special(SPECIAL_HASTE))
-    damage += calc_damage(d16(), base_damage);
+    damage_total += calc_damage(d16(), base_damage);
+
+  /* Keep the shared 16-bit damage pipeline from wrapping on haste hits. */
+  if (damage_total > 65535UL)
+    damage_total = 65535UL;
+  const uint16_t damage = (uint16_t)damage_total;
 
   Monster *monster = encounter.monsters;
   uint8_t atk_roll = d256();
@@ -277,11 +282,8 @@ static void damage_all_no_miss(uint16_t base_damage, DamageAspect type) {
     if (evaded)
       continue;
 
-    uint16_t d = damage;
-    if (monster->aspect_resist & type)
-      d = damage >> 1;
-    else if (monster->aspect_vuln & type)
-      d = damage << 1;
+    uint16_t d = combat_apply_aspect(damage,
+      monster->aspect_resist, monster->aspect_vuln, (uint8_t)type);
 
     if (monster->target_hp < d)
       monster->target_hp = 0;
