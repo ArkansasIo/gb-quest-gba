@@ -84,3 +84,15 @@ To build the ROM run the following commands:
 * `npm install`
 * `make assets`
 * `make`
+
+
+## ARPG and MMORPG Systems
+
+The system architecture and implementation boundaries are documented in:
+
+- [ARPG + MMORPG Systems Master Specification](docs/ARPG_MMO_SYSTEMS_MASTER_PLAN.md) — character, combat, progression, loot, crafting, economy, multiplayer authority, persistence, and delivery phases.
+- [Menu Navigation and Screen Contract](docs/MENU_NAVIGATION_CONTRACT.md) — root menu pages, submenu hierarchy, input rules, rendering constraints, and acceptance tests.
+- [In-Game Menu System](docs/IN_GAME_MENU_SYSTEM.md) — current ROM menu behavior and existing screens.
+- [Online World Server](docs/ONLINE_WORLD_SERVER.md) — currently implemented HTTP endpoints and online-play limitations.
+
+The ROM remains playable offline. Internet multiplayer requires the separate server and a web/desktop client or a separately implemented hardware bridge; the current GBC ROM does not directly connect to the internet.
