@@ -22,6 +22,15 @@
 #define PROGRESS_BANK 18
 #define MAX_LEVEL 720
 
+/* Monster rank values accepted by monster_stats and monster_xp. */
+typedef enum MonsterRank {
+  MONSTER_RANK_NORMAL = 0,
+  MONSTER_RANK_ELITE = 1,
+  MONSTER_RANK_BOSS = 2,
+  MONSTER_RANK_WORLD_BOSS = 3,
+  MONSTER_RANK_ARC_BOSS = 4,
+} MonsterRank;
+
 typedef enum Attr {
   ATTR_STR,  // Strength: attack, crit damage, a little defense
   ATTR_DEX,  // Dexterity: crit chance, attack speed, dodge
