@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "battle.h"
+#include "combat_rules.h"
 #include "battle.effects.h"
 #include "encounter.h"
 #include "player.h"
@@ -147,13 +148,15 @@ static void damage_monster(uint16_t base_damage, DamageAspect type) {
   if (hasted)
     damage += calc_damage(d16(), base_damage);
 
+  /* Resolve resistance/vulnerability after critical and haste bonuses. */
+  damage = combat_apply_aspect(damage, monster->aspect_resist,
+    monster->aspect_vuln, (uint8_t)type);
+
   if (critical) {
     sprintf(battle_post_message, str_player_hit_crit, damage);
   } else if (monster->aspect_resist & type) {
-    damage >>= 1;
     sprintf(battle_post_message, str_player_hit_resist, damage);
   } else if (monster->aspect_vuln & type) {
-    damage <<= 1;
     sprintf(battle_post_message, str_player_hit_vuln, damage);
   } else {
     sprintf(battle_post_message, str_player_hit, damage);
@@ -227,12 +230,8 @@ static uint8_t damage_all(
 
     hits++;
 
-    uint16_t d = damage;
-    if (monster->aspect_resist & type) {
-      d = damage >> 1;
-    } else if (monster->aspect_vuln & type) {
-      d = damage << 1;
-    }
+    uint16_t d = combat_apply_aspect(damage,
+      monster->aspect_resist, monster->aspect_vuln, (uint8_t)type);
 
     if (monster->target_hp < d)
       monster->target_hp = 0;
