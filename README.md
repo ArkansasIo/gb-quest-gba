@@ -54,6 +54,10 @@ a new character.
   save memory whenever you enter a town. If you are defeated, you lose 10% of
   your gold and wake up in the last town you visited.
 
+See [the in-game menu and submenu system](docs/IN_GAME_MENU_SYSTEM.md) for the
+Pokémon-era blue-panel navigation design, existing screens, controls, and the
+planned Party, World Map, Guild, Save, and Settings branches.
+
 See [the 72-zone world atlas](docs/WORLD_ATLAS_72_ZONES.md) for the region map,
 settlements, underground frontier, and dungeon gateways. See [world tiers, raids,
 trails, and monster taxonomy](docs/WORLD_TIERS_RAIDS_TRAILS_MONSTERS.md) for
