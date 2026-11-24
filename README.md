@@ -1,4 +1,4 @@
-# Labyrinth of the Dragon (GBC)
+﻿# Labyrinth of the Dragon (GBC)
 An 8-bit Adventure RPG with D&D Monsters!
 
 ## Action RPG Mode
@@ -15,7 +15,8 @@ you directly; there is no separate battle screen.
 | A | Talk / open / read. With nothing in front of you: use the selected hotbar skill or potion |
 | SELECT | Dodge roll (two quick steps, briefly invulnerable) |
 | Hold B + SELECT | Switch the selected hotbar slot |
-| START | Pause menu (not available while enemies are near) |
+| START | Open the pause menu (not available while enemies are near) |
+| SELECT in pause menu | Switch between menu pages |
 
 On the title screen, START continues your saved game and SELECT + START starts
 a new character.
@@ -41,17 +42,40 @@ a new character.
   Skills have SP costs and cooldowns.
 * **Character growth.** Each level gives 3 stat points to spend on STR, DEX,
   INT, VIT, END and SPI. HP and SP regenerate over time, faster outside combat.
+* **Full in-game menus.** The two-page pause hub opens skills, gear, quests,
+  town services, character pages, the world atlas, journal, options, controls
+  and manual save. Character pages separate overview, base and allocated
+  attributes, and derived combat statistics. Gear pages separate equipped
+  slots and their combined bonuses from bag items, with item rarity and stat
+  details, equip, unequip and sell actions. Skill, item and quest selections
+  open detail submenus with rank, stat, progress and reward information. Town
+  services include a shop, bag and vault storage, and a gear upgrade forge.
+* **Professions.** Six gathering and twelve crafting professions progress to
+  level 100. Harvest field nodes for materials, then craft weapons, armor,
+  trinkets, and consumables in town.
 * **Towns.** A shop sells random gear and potions, and a quest board offers
   bounties: slay monsters, slay elites, explore a zone, climb the tower, or slay
   a boss. Quests pay gold and XP.
-* **Open world.** A 9x8 grid of zones across nine regions, each with its own
-  look and monsters. Each region has a town at its center, and monsters get
-  stronger the farther you travel from the start. There is a 100-floor tower,
-  and the original labyrinth is entered from the zone north of the starting
-  town.
+* **Open world.** A connected 9x8 grid of 72 named zones across nine biomes,
+  with nine capital cities and nine smaller settlements. Zone names are
+  available through the world-area lookup and appear on settlement signs;
+  layouts are generated deterministically from each zone's ID. Monster
+  strength rises with distance from Ashford. The
+  100-floor tower, original eight-floor labyrinth, nine regional raids, and
+  five-floor Echoing Vault, Deep Roads, and Abyssal Rift instances have marked
+  world gates and named boss encounters.
 * **Saving.** The game saves automatically to the cartridge's battery-backed
   save memory whenever you enter a town. If you are defeated, you lose 10% of
   your gold and wake up in the last town you visited.
+
+See [the 72-zone world atlas](docs/WORLD_ATLAS_72_ZONES.md) for the region map,
+settlements, underground frontier, and dungeon gateways. See [world tiers, raids,
+trails, and monster taxonomy](docs/WORLD_TIERS_RAIDS_TRAILS_MONSTERS.md) for
+level bands, instance routes, tower scaling, and D&D-style creature tags.
+See [the online world server guide](docs/ONLINE_WORLD_SERVER.md) for the
+authoritative realm, character, zone, chat, party, and guild backend.
+See [professions and gathering](docs/PROFESSIONS_AND_GATHERING.md) for the
+profession list, gathering regions, and craft recipes.
 
 ## How to Build the ROM
 
@@ -72,4 +96,3 @@ To build the ROM run the following commands:
 * `npm install`
 * `make assets`
 * `make`
-

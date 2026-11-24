@@ -27,6 +27,8 @@
 #include "map.h"
 #include "monster.h"
 #include "player.h"
+#include "progress.h"
+#include "skills.h"
 #include "sound.h"
 #include "stats.h"
 #include "textbox.h"
@@ -63,9 +65,7 @@ bool arpg_credits_pending;
 #define T_SPARK 0x46
 #define T_HEAL 0x47
 #define T_RING 0x48
-#define T_ALERT 0x49
 #define T_SHIELD 0x4A
-#define T_POISON 0x4B
 #define T_UP 0x4C
 #define T_DIGIT0 0x30
 
@@ -77,145 +77,6 @@ bool arpg_credits_pending;
 #define HERO_IFRAMES 45
 
 #define HUD_Y 136
-
-//------------------------------------------------------------------------------
-// Skills
-//------------------------------------------------------------------------------
-
-typedef enum SkillKind {
-  SK_STRIKE,
-  SK_CLEAVE,
-  SK_BOLT,
-  SK_NOVA,
-  SK_HEAL,
-  SK_RAGE,
-  SK_GUARD,
-  SK_HASTE,
-  SK_STUN,
-  SK_DRAIN,
-  SK_POISON,
-  SK_DASH,
-  SK_QUAKE,
-  SK_KIND_COUNT,
-} SkillKind;
-
-typedef struct SkillDef {
-  const char *name;
-  uint8_t kind;
-  uint16_t power;
-} SkillDef;
-
-static const uint8_t kind_cost[SK_KIND_COUNT] = {
-  4, 6, 5, 8, 8, 10, 10, 10, 5, 7, 6, 4, 16
-};
-
-static const uint8_t kind_cooldown[SK_KIND_COUNT] = {
-  40, 60, 30, 90, 240, 250, 250, 250, 80, 60, 60, 50, 250
-};
-
-static const char *const kind_info[SK_KIND_COUNT] = {
-  "Strike ahead",
-  "Hit all around",
-  "Ranged bolt",
-  "Blast nearby foes",
-  "Restore HP",
-  "Raise attack",
-  "Raise defense",
-  "Act faster",
-  "Strike and stun",
-  "Bolt, steal HP",
-  "Bolt, poisons",
-  "Dash, dodge",
-  "Hit every foe",
-};
-
-static const uint8_t skill_levels[SKILL_COUNT] = { 1, 5, 8, 12, 16, 20 };
-
-static const SkillDef class_skills[CLASS_COUNT][SKILL_COUNT] = {
-  // Druid
-  { { "Lightning", SK_BOLT, 115 }, { "Cure", SK_HEAL, 30 },
-    { "Barkskin", SK_GUARD, 0 }, { "Swarm", SK_NOVA, 95 },
-    { "Regrowth", SK_HEAL, 60 }, { "Storm", SK_QUAKE, 150 } },
-  // Fighter
-  { { "Power Hit", SK_STRIKE, 160 }, { "2nd Wind", SK_HEAL, 25 },
-    { "Cleave", SK_CLEAVE, 115 }, { "Trip", SK_STUN, 100 },
-    { "Surge", SK_HASTE, 0 }, { "Whirlwind", SK_NOVA, 140 } },
-  // Monk
-  { { "Palm", SK_STUN, 120 }, { "Flurry", SK_STRIKE, 200 },
-    { "Evasion", SK_DASH, 0 }, { "Still Mind", SK_HEAL, 35 },
-    { "Diamond", SK_GUARD, 0 }, { "Quivering", SK_STRIKE, 320 } },
-  // Sorcerer
-  { { "Fireball", SK_BOLT, 140 }, { "Haste", SK_HASTE, 0 },
-    { "Sleet", SK_NOVA, 100 }, { "Darkness", SK_STUN, 90 },
-    { "Disintegr", SK_BOLT, 260 }, { "Wild Magic", SK_QUAKE, 180 } },
-  // Rogue
-  { { "Backstab", SK_STRIKE, 180 }, { "Poison", SK_POISON, 80 },
-    { "Tumble", SK_DASH, 0 }, { "Fan Knives", SK_NOVA, 90 },
-    { "Shadow", SK_HASTE, 0 }, { "Assassin", SK_STRIKE, 300 } },
-  // Ranger
-  { { "Aimed Shot", SK_BOLT, 150 }, { "Volley", SK_NOVA, 100 },
-    { "Snare", SK_STUN, 80 }, { "Mend", SK_HEAL, 30 },
-    { "Hunter", SK_RAGE, 0 }, { "Arrow Rain", SK_QUAKE, 150 } },
-  // Knight
-  { { "Smite", SK_STRIKE, 150 }, { "Shield Up", SK_GUARD, 0 },
-    { "Bash", SK_STUN, 110 }, { "Rally", SK_HEAL, 30 },
-    { "Charge", SK_DASH, 0 }, { "Judgment", SK_CLEAVE, 180 } },
-  // Wizard
-  { { "M.Missile", SK_BOLT, 130 }, { "Frost Nova", SK_NOVA, 100 },
-    { "Blink", SK_DASH, 0 }, { "Shield", SK_GUARD, 0 },
-    { "Haste", SK_HASTE, 0 }, { "Meteor", SK_QUAKE, 200 } },
-  // Paladin
-  { { "Smite", SK_STRIKE, 150 }, { "Lay Hands", SK_HEAL, 45 },
-    { "Aura", SK_GUARD, 0 }, { "Holy Bolt", SK_BOLT, 140 },
-    { "Crusade", SK_RAGE, 0 }, { "Wrath", SK_NOVA, 160 } },
-  // Cleric
-  { { "Holy Bolt", SK_BOLT, 120 }, { "Heal", SK_HEAL, 40 },
-    { "Bless", SK_RAGE, 0 }, { "Sanctuary", SK_NOVA, 110 },
-    { "Ward", SK_GUARD, 0 }, { "Miracle", SK_HEAL, 90 } },
-  // Bard
-  { { "Dissonance", SK_BOLT, 110 }, { "Inspire", SK_RAGE, 0 },
-    { "Lullaby", SK_STUN, 60 }, { "Ballad", SK_HEAL, 30 },
-    { "Tempo", SK_HASTE, 0 }, { "Crescendo", SK_QUAKE, 160 } },
-  // Necromancer
-  { { "Drain", SK_DRAIN, 110 }, { "Bone Spear", SK_BOLT, 150 },
-    { "Curse", SK_POISON, 90 }, { "Corpse Exp", SK_NOVA, 140 },
-    { "Bone Armor", SK_GUARD, 0 }, { "Death", SK_QUAKE, 190 } },
-  // Assassin
-  { { "Stab", SK_STRIKE, 170 }, { "Venom", SK_POISON, 100 },
-    { "Shadowstep", SK_DASH, 0 }, { "Blades", SK_CLEAVE, 120 },
-    { "Fade", SK_HASTE, 0 }, { "Execute", SK_STRIKE, 330 } },
-  // Dragoon
-  { { "Lance", SK_STRIKE, 160 }, { "Jump", SK_DASH, 0 },
-    { "Sweep", SK_CLEAVE, 120 }, { "Dragon Hrt", SK_RAGE, 0 },
-    { "Wyvern", SK_BOLT, 160 }, { "Dragonfall", SK_QUAKE, 190 } },
-  // Shaman
-  { { "Spirit", SK_BOLT, 120 }, { "Totem", SK_GUARD, 0 },
-    { "Chain Ltng", SK_NOVA, 120 }, { "Mend", SK_HEAL, 40 },
-    { "Bloodlust", SK_HASTE, 0 }, { "Earthquake", SK_QUAKE, 180 } },
-  // Warlock
-  { { "Eldritch", SK_BOLT, 130 }, { "Hex", SK_POISON, 110 },
-    { "Drain Life", SK_DRAIN, 120 }, { "Dark Pact", SK_RAGE, 0 },
-    { "Doom", SK_NOVA, 150 }, { "Apocalypse", SK_QUAKE, 210 } },
-  // Stalker
-  { { "Rend", SK_STRIKE, 160 }, { "Pounce", SK_DASH, 0 },
-    { "Snare", SK_STUN, 90 }, { "Vanish", SK_HASTE, 0 },
-    { "Mark", SK_RAGE, 0 }, { "Kill Shot", SK_BOLT, 260 } },
-  // Marauder
-  { { "Crush", SK_STRIKE, 170 }, { "Rampage", SK_CLEAVE, 130 },
-    { "Warcry", SK_RAGE, 0 }, { "Bloodlust", SK_DRAIN, 120 },
-    { "Stomp", SK_NOVA, 140 }, { "Berserk", SK_HASTE, 0 } },
-};
-
-static const SkillDef *skill_def(uint8_t k) {
-  uint8_t c = player.player_class < CLASS_COUNT ? player.player_class : 0;
-  return &class_skills[c][k];
-}
-
-static uint8_t skill_cost(const SkillDef *s, uint8_t rank) {
-  uint16_t c = kind_cost[s->kind];
-  c += (c * player.level) / 20 + rank;
-  return c > 250 ? 250 : (uint8_t)c;
-}
 
 //------------------------------------------------------------------------------
 // State
@@ -249,6 +110,10 @@ typedef struct Mob {
   uint8_t attacks;
   uint8_t palette;
   uint8_t tile_root;
+  uint16_t level;
+  uint16_t atk;
+  uint16_t def;
+  uint16_t mdef;
 } Mob;
 
 typedef struct Bolt {
@@ -259,7 +124,7 @@ typedef struct Bolt {
   int8_t py;
   Direction dir;
   uint8_t range;
-  uint8_t power;
+  uint16_t power;
   uint8_t kind;
 } Bolt;
 
@@ -277,12 +142,13 @@ static Bolt ebolt;
 static uint8_t ebolt_mob;
 
 static uint8_t atk_cd;
-static uint8_t skill_cd[SKILL_COUNT];
+static uint16_t skill_cd[SKILL_COUNT];
 static uint8_t iframes;
 static uint8_t hero_stun;
 static uint8_t hero_poison;
 static uint8_t tick;
 static uint8_t dodge_cd;
+static uint8_t boss_title_timer;
 static uint8_t forced_steps;
 static Direction forced_dir;
 static bool fast;
@@ -300,12 +166,10 @@ static int16_t pop_x;
 static int16_t pop_y;
 static uint8_t pop_n;
 static uint8_t pop_tiles[3];
-static uint8_t pop_pal;
 
 static uint8_t lost_timer;
-static uint16_t xp_gain;
-static uint8_t encounter_level;
-static uint8_t kills;
+static uint32_t xp_gain;
+static uint16_t encounter_level;
 static uint8_t drops;
 static char msg[160];
 static bool msg_pending;
@@ -405,11 +269,21 @@ static bool mob_can_enter(int8_t x, int8_t y) {
   return mob_at(x, y) == NULL;
 }
 
-static uint16_t rand_vary(uint16_t v) {
+static uint16_t rand_vary(uint32_t v) {
   // +/- ~12%
-  int16_t delta = (int16_t)((v >> 3) * ((int8_t)d16() - 8)) / 8;
-  int16_t r = (int16_t)v + delta;
-  return r < 1 ? 1 : (uint16_t)r;
+  uint32_t r = v - v / 8 + (v * d32()) / 128;
+  if (r < 1) r = 1;
+  return r > 60000 ? 60000 : (uint16_t)r;
+}
+
+static uint16_t cap16(uint32_t v) {
+  return v > 65000 ? 65000 : (uint16_t)v;
+}
+
+static void heal_hero(uint16_t amount) {
+  const uint32_t hp = (uint32_t)player.hp + amount;
+  player.hp = hp > player.max_hp ? player.max_hp : (uint16_t)hp;
+  player_hp_and_sp_updated = true;
 }
 
 //------------------------------------------------------------------------------
@@ -431,22 +305,32 @@ static void fx_icon(uint8_t tile, uint8_t pal) {
   fx_pal = pal;
 }
 
+/**
+ * Shows a damage number. Values of 1000+ show as thousands with a "K".
+ */
 static void popup_number(int8_t tx, int8_t ty, uint16_t value, uint8_t pal) {
   uint8_t sx, sy;
   if (!to_screen(tx, ty, 0, -6, &sx, &sy))
     return;
+  bool thousands = value >= 1000;
+  if (thousands)
+    value /= 1000;
   if (value > 999)
     value = 999;
-  pop_n = value >= 100 ? 3 : (value >= 10 ? 2 : 1);
-  uint8_t k = pop_n;
+  uint8_t digits = value >= 100 ? 3 : (value >= 10 ? 2 : 1);
+  if (thousands && digits > 2)
+    digits = 2, value = 99;
+  pop_n = digits + (thousands ? 1 : 0);
+  uint8_t k = digits;
   do {
     pop_tiles[--k] = T_DIGIT0 + value % 10;
     value /= 10;
   } while (k);
+  if (thousands)
+    pop_tiles[digits] = 'K' + FONT_OFFSET;
   pop_x = sx + 8 - pop_n * 4;
   pop_y = sy;
   pop_t = 28;
-  pop_pal = pal;
   for (k = 0; k < 3; k++) {
     set_sprite_tile(SPR_POP + k, pop_tiles[k]);
     set_sprite_prop(SPR_POP + k, PROP_BANK1 | pal);
@@ -573,36 +457,38 @@ static void capture_hud_row(void) {
     hud_saved[k] = get_vram_byte(vram + k);
 }
 
-void arpg_hotbar_name(uint8_t entry, char *buf) BANKED {
-  if (entry == HOTBAR_POTION)
-    sprintf(buf, "Potion x%u", inventory[ITEM_POTION].quantity);
-  else if (entry == HOTBAR_ETHER)
-    sprintf(buf, "Ether x%u", inventory[ITEM_ETHER].quantity);
-  else if (entry < SKILL_COUNT)
-    strcpy(buf, skill_def(entry)->name);
-  else
-    strcpy(buf, "-");
+static uint8_t entry_ready(uint8_t entry) {
+  if (entry >= SKILL_COUNT)
+    return 1;
+  SkillInfo info;
+  skill_get(entry, &info);
+  return skill_rank[entry] && !skill_cd[entry] && player.sp >= info.cost;
 }
 
 static void draw_hud(void) {
   char buf[24];
   char name[12];
-  const uint8_t entry = hotbar[hotbar_sel];
-  arpg_hotbar_name(entry, name);
-  name[5] = 0;
-  uint8_t ready = 1;
-  if (entry < SKILL_COUNT) {
-    const SkillDef *s = skill_def(entry);
-    ready = skill_rank[entry] && !skill_cd[entry] &&
-      player.sp >= skill_cost(s, skill_rank[entry]);
+  if (boss_title_timer && encounter.monsters[0].name) {
+    strncpy(buf, encounter.monsters[0].name, 20);
+    buf[20] = 0;
+    core.draw_text(VRAM_WINDOW, buf, 20);
+    hud_dirty = false;
+    return;
   }
+  const uint8_t entry = hotbar[hotbar_sel];
+  hotbar_entry_name(entry, name);
+  name[4] = 0;
+  const uint8_t ready = entry_ready(entry);
   memset(buf, ' ', 20);
+  // HP (current/max, or current only when long)
   sprintf(buf, "%u/%u", player.hp, player.max_hp);
+  if (strlen(buf) > 9)
+    sprintf(buf, "HP%u", player.hp);
   buf[strlen(buf)] = ' ';
   sprintf(buf + 10, "%c%u", is_magic_class() ? 'M' : 'S', player.sp);
   buf[10 + strlen(buf + 10)] = ' ';
-  buf[14] = ready ? '>' : '.';
-  memcpy(buf + 15, name, strlen(name));
+  buf[15] = ready ? '>' : '.';
+  memcpy(buf + 16, name, strlen(name));
   buf[20] = 0;
   core.draw_text(VRAM_WINDOW, buf, 20);
 
@@ -618,8 +504,17 @@ static void update_hud(void) {
     (map_state == MAP_STATE_WAITING || map_state == MAP_STATE_MOVING) &&
     textbox.state == TEXT_BOX_CLOSED;
 
-  if (!can_show) {
+  if (!can_show)
     return;
+
+  if (boss_title_timer) {
+    boss_title_timer--;
+    if (!boss_title_timer)
+      hud_dirty = true;
+    if (hud_dirty)
+      draw_hud();
+    if (boss_title_timer)
+      return;
   }
 
   if (!hud_visible) {
@@ -628,15 +523,9 @@ static void update_hud(void) {
     move_win(7, HUD_Y);
   }
 
-  if (!hud_dirty && (tick & 7) == 0) {
-    uint8_t ready = 1;
-    const uint8_t entry = hotbar[hotbar_sel];
-    if (entry < SKILL_COUNT)
-      ready = skill_rank[entry] && !skill_cd[entry] &&
-        player.sp >= skill_cost(skill_def(entry), skill_rank[entry]);
-    if (ready != hud_ready)
-      hud_dirty = true;
-  }
+  if (!hud_dirty && (tick & 7) == 0 &&
+    entry_ready(hotbar[hotbar_sel]) != hud_ready)
+    hud_dirty = true;
 
   if (hud_dirty || hud_hp != player.hp || hud_sp != player.sp ||
     hud_sel != hotbar_sel)
@@ -703,6 +592,11 @@ static uint8_t ai_for(MonsterType type) {
   }
 }
 
+static bool enraged(const Mob *m) {
+  const Monster *mon = encounter.monsters + m->slot;
+  return m->rank == 2 && mon->hp < mon->max_hp / 2;
+}
+
 static uint8_t move_delay(const Mob *m) {
   uint8_t d;
   switch (m->kind) {
@@ -711,24 +605,16 @@ static uint8_t move_delay(const Mob *m) {
   case AI_RANGED: d = 14; break;
   default: d = 10;
   }
-  if (m->rank == 2) {
-    const Monster *mon = encounter.monsters + m->slot;
-    if (mon->hp < mon->max_hp / 2)
-      d >>= 1;
-  }
-  if (buffs.haste && d > 4)
-    d += 4;
+  if (enraged(m))
+    d >>= 1;
   return d;
 }
 
 static uint8_t attack_delay(const Mob *m) {
-  const Monster *mon = encounter.monsters + m->slot;
-  uint8_t base = m->kind == AI_SLOW ? 90 : 72;
-  uint8_t agl = mon->agl > 60 ? 60 : mon->agl;
-  uint8_t d = base - agl / 2;
-  if (m->rank == 2 && mon->hp < mon->max_hp / 2)
+  uint8_t d = m->kind == AI_SLOW ? 90 : 72;
+  if (enraged(m))
     d -= d / 3;
-  return d < 30 ? 30 : d;
+  return d;
 }
 
 /**
@@ -761,9 +647,15 @@ static bool find_spawn(int8_t *ox, int8_t *oy, uint8_t index) {
 
 void arpg_begin_encounter(void) BANKED {
   uint8_t count = 0;
-  bool boss_fight = encounter.is_final_boss;
+  const bool boss_fight = encounter.is_final_boss;
+  const bool dungeon = world_location() == WORLD_LOC_DUNGEON;
+  const WorldLocation location = world_location();
+  const bool named_boss = (location == WORLD_LOC_TOWER ||
+    location == WORLD_LOC_RAID) && encounter.monsters[0].exp_tier == S_TIER;
+  const uint16_t area = world_area_level();
 
   memset(mobs, 0, sizeof(mobs));
+  boss_title_timer = named_boss ? 120 : 0;
   pbolt.active = false;
   ebolt.active = false;
 
@@ -787,20 +679,31 @@ void arpg_begin_encounter(void) BANKED {
     m->dir = dir_toward(hero_x() - x, hero_y() - y);
     m->kind = ai_for(mon->type);
     m->rank = 0;
-    if (mon->exp_tier == S_TIER || boss_fight) {
+    if (mon->exp_tier == S_TIER || boss_fight)
       m->rank = 2;
-    } else if (mon->level >= 5 && (rand() & 7) == 0) {
+    else if ((rand() & 7) == 0 && (area >= 5 || dungeon))
       m->rank = 1;
-    }
 
-    // Real-time tuning: bosses and elites are much tougher.
-    if (m->rank == 2) {
-      mon->max_hp = mon->max_hp > 21000 ? 65000 : mon->max_hp * 3;
-    } else if (m->rank == 1) {
-      mon->max_hp = mon->max_hp > 30000 ? 65000 : mon->max_hp * 2;
-      mon->atk += mon->atk / 4;
+    // Monster level: the area level (scripted labyrinth monsters keep the
+    // level they were designed for, but never fall far behind the hero).
+    uint16_t lvl = area;
+    if (dungeon) {
+      lvl = mon->level;
+      if (hero_level > 20 && lvl < hero_level - 20)
+        lvl = hero_level - 20;
+    } else if (lvl > 2) {
+      lvl = lvl - 1 + (d4() % 3);
     }
-    mon->hp = mon->max_hp;
+    if (lvl > MAX_LEVEL) lvl = MAX_LEVEL;
+    m->level = lvl;
+
+    MobStats st;
+    monster_stats(mon->type, mon->exp_tier, m->rank, lvl, &st);
+    mon->max_hp = st.hp;
+    mon->hp = st.hp;
+    m->atk = st.atk;
+    m->def = st.def;
+    m->mdef = st.mdef;
 
     m->move_cd = 20 + count * 10;
     m->atk_cd = 40;
@@ -817,9 +720,8 @@ void arpg_begin_encounter(void) BANKED {
   DISPLAY_ON;
 
   xp_gain = 0;
-  kills = 0;
   drops = 0;
-  encounter_level = world_area_level();
+  encounter_level = area;
   encounter.victory = false;
   strcpy(msg, "Victory!");
 
@@ -838,29 +740,49 @@ void arpg_begin_encounter(void) BANKED {
 
 static void end_combat(bool victory);
 
-static void hurt_hero(uint16_t dmg, bool magic) {
+/**
+ * Deals damage from a monster to the hero (defense, dodge, block, shield).
+ */
+static void hurt_hero(uint16_t raw, bool magic) {
   if (iframes || player.hp == 0)
     return;
-  uint8_t defense = magic ? player.mdef : player.def;
-  int16_t d = (int16_t)dmg - defense / 3;
-  if (d < 1) d = 1;
-  if (buffs.def) d -= d / 4;
-  if (d < 1) d = 1;
-  player.hp = (uint16_t)d >= player.hp ? 0 : player.hp - d;
+  if (debug_god_mode) {
+    iframes = HERO_IFRAMES;
+    return;
+  }
+  if (d128() < (uint16_t)hs.dodge * 128 / 100) {
+    iframes = 20;
+    play_sound(sfx_evade);
+    return;
+  }
+  const uint16_t defense = magic ? hs.mdef : hs.def;
+  uint32_t d = raw > defense / 2 ? raw - defense / 2 : 0;
+  if (d < raw / 8 + 1)
+    d = raw / 8 + 1;
+  if (d128() < (uint16_t)hs.block * 128 / 100)
+    d /= 2;
+  if (shield_hp) {
+    if (d <= shield_hp) {
+      shield_hp -= d;
+      d = 0;
+    } else {
+      d -= shield_hp;
+      shield_hp = 0;
+    }
+  }
   iframes = HERO_IFRAMES;
-  popup_number(hero_x(), hero_y(), d, PAL_FX);
+  if (d == 0) {
+    play_sound(sfx_mid_powerup);
+    return;
+  }
+  player.hp = d >= player.hp ? 0 : player.hp - (uint16_t)d;
+  popup_number(hero_x(), hero_y(), cap16(d), PAL_FX);
   play_sound(magic ? sfx_monster_attack2 : sfx_monster_attack1);
   player_hp_and_sp_updated = true;
 }
 
 static uint16_t monster_damage(const Mob *m) {
-  const Monster *mon = encounter.monsters + m->slot;
-  uint16_t d = get_monster_dmg(mon->level, mon->exp_tier);
-  d = d + mon->atk / 4;
-  d = (d * 2) / 3;
-  if (m->rank == 1) d += d / 4;
-  if (m->rank == 2) d += d / 3;
-  return rand_vary(d);
+  return rand_vary(m->atk);
 }
 
 static void kill_mob(Mob *m) {
@@ -871,38 +793,36 @@ static void kill_mob(Mob *m) {
   play_sound(sfx_monster_death);
   fx_start(FX_SPARK, m->x, m->y, DOWN);
 
-  uint16_t xp = calc_monster_exp(mon->exp_level, mon->exp_tier);
-  if (m->rank == 1) xp *= 2;
-  if (m->rank == 2) xp *= 3;
-  xp_gain = xp_gain + xp > 60000 ? 60000 : xp_gain + xp;
-  kills++;
+  xp_gain += monster_xp(m->level, mon->exp_tier, m->rank);
 
   quest_event(QUEST_EVENT_KILL, mon->type);
   if (m->rank == 1)
     quest_event(QUEST_EVENT_ELITE, mon->type);
-  if (m->rank == 2)
+  if (m->rank == 2) {
     quest_event(QUEST_EVENT_BOSS, mon->type);
+    if (world_location() == WORLD_LOC_RAID)
+      quest_event(QUEST_EVENT_RAID, raid_state.raid_id);
+  }
 
-  drops += loot_roll_kill(encounter_level, m->rank, msg);
+  drops += loot_roll_kill(m->level, m->rank, msg);
 }
 
 /**
  * Deals damage from the hero to a monster.
  */
-static void hit_mob(Mob *m, uint8_t power, bool magic, uint8_t stun) {
+static void hit_mob(Mob *m, uint16_t power, bool magic, uint8_t stun) {
   Monster *mon = encounter.monsters + m->slot;
-  uint16_t base = get_player_damage(player.level, B_TIER);
-  const uint8_t stat = magic ? player.matk : player.atk;
-  const uint8_t res = magic ? mon->mdef : mon->def;
-  int16_t d = (int16_t)base + stat / 2 - res / 4;
-  if (d < 1) d = 1;
-  uint32_t big = ((uint32_t)d * power) / 100;
-  uint16_t dmg = big > 9999 ? 9999 : (uint16_t)big;
-  dmg = rand_vary(dmg);
+  const uint32_t stat = magic ? hs.matk : hs.atk;
+  const uint32_t res = magic ? m->mdef : m->def;
+  uint32_t raw = stat * power / 100;
+  uint32_t d = raw > res / 2 ? raw - res / 2 : 0;
+  if (d < raw / 8 + 1)
+    d = raw / 8 + 1;
+  uint16_t dmg = rand_vary(d);
 
-  bool crit = d128() < (uint16_t)loot_bonus.crit * 128 / 100;
+  const bool crit = d128() < (uint16_t)hs.crit * 128 / 100;
   if (crit)
-    dmg *= 2;
+    dmg = cap16((uint32_t)dmg * (100 + hs.crit_dmg) / 100);
 
   mon->hp = dmg >= mon->hp ? 0 : mon->hp - dmg;
   popup_number(m->x, m->y, dmg, crit ? PAL_FX : PAL_POP);
@@ -910,11 +830,8 @@ static void hit_mob(Mob *m, uint8_t power, bool magic, uint8_t stun) {
   play_sound(crit ? sfx_monster_critical : (magic ? sfx_magic_missile :
     sfx_melee_attack));
 
-  if (loot_bonus.leech) {
-    uint16_t heal = (dmg * loot_bonus.leech) / 100 + 1;
-    player.hp = player.hp + heal > player.max_hp ? player.max_hp :
-      player.hp + heal;
-  }
+  if (hs.leech)
+    heal_hero((uint16_t)((uint32_t)dmg * hs.leech / 100) + 1);
 
   if (mon->hp == 0) {
     kill_mob(m);
@@ -940,21 +857,17 @@ static void hit_mob(Mob *m, uint8_t power, bool magic, uint8_t stun) {
   }
 }
 
-static bool use_magic(void) {
-  return player.matk > player.atk;
-}
-
-static uint8_t hit_area(int8_t cx, int8_t cy, uint8_t radius, uint8_t power,
+static uint8_t hit_area(int8_t cx, int8_t cy, uint8_t radius, uint16_t power,
   bool magic) {
   uint8_t hits = 0;
   Mob *m = mobs;
   for (uint8_t k = 0; k < MAX_MOBS; k++, m++) {
     if (!m->active)
       continue;
-    const uint8_t dist = absi(m->x - cx) + absi(m->y - cy);
-    const uint8_t cheb = absi(m->x - cx) > absi(m->y - cy) ?
-      absi(m->x - cx) : absi(m->y - cy);
-    if (radius == 1 ? cheb <= 1 : dist <= radius) {
+    const uint8_t ax = absi(m->x - cx);
+    const uint8_t ay = absi(m->y - cy);
+    const bool in = radius == 1 ? (ax <= 1 && ay <= 1) : (ax + ay <= radius);
+    if (in) {
       hit_mob(m, power, magic, 0);
       hits++;
     }
@@ -966,7 +879,7 @@ static uint8_t hit_area(int8_t cx, int8_t cy, uint8_t radius, uint8_t power,
 // Bolts
 //------------------------------------------------------------------------------
 
-static void fire_bolt(Bolt *b, int8_t x, int8_t y, Direction d, uint8_t power,
+static void fire_bolt(Bolt *b, int8_t x, int8_t y, Direction d, uint16_t power,
   uint8_t kind) {
   b->active = true;
   b->x = x;
@@ -1010,10 +923,6 @@ static void draw_bolt(const Bolt *b, uint8_t sprite, uint8_t tile, uint8_t pal) 
   move_sprite(sprite, sx + 4, sy + 4);
 }
 
-static uint8_t kind_is_green(uint8_t kind) {
-  return kind == SK_POISON ? PAL_GREEN : PAL_FX;
-}
-
 static void update_player_bolt(void) {
   if (!pbolt.active) {
     move_sprite(SPR_PBOLT, 0, 0);
@@ -1027,17 +936,15 @@ static void update_player_bolt(void) {
       hit_mob(m, pbolt.power, true, 0);
       if (mobs[mi].active && kind == SK_POISON)
         mobs[mi].poison = 180;
-      if (kind == SK_DRAIN) {
-        uint16_t heal = player.max_hp / 12 + 2;
-        player.hp = player.hp + heal > player.max_hp ? player.max_hp :
-          player.hp + heal;
-      }
+      if (kind == SK_DRAIN)
+        heal_hero(player.max_hp / 12 + 2);
       pbolt.active = false;
     } else if (map_attr_at(pbolt.x, pbolt.y) == MAP_WALL || !pbolt.range) {
       pbolt.active = false;
     }
   }
-  draw_bolt(&pbolt, SPR_PBOLT, T_PBOLT, kind_is_green(pbolt.kind));
+  draw_bolt(&pbolt, SPR_PBOLT, T_PBOLT,
+    pbolt.kind == SK_POISON ? PAL_GREEN : PAL_FX);
 }
 
 static void update_enemy_bolt(void) {
@@ -1048,9 +955,9 @@ static void update_enemy_bolt(void) {
   if (advance_bolt(&ebolt, 2)) {
     if (hero_occupies(ebolt.x, ebolt.y)) {
       const Mob *m = mobs + ebolt_mob;
-      hurt_hero(ebolt.power ? monster_damage(m) : 1, true);
+      hurt_hero(monster_damage(m), true);
       if (encounter.monsters[m->slot].type == MONSTER_MINDFLAYER &&
-        (rand() & 3) == 0 && !iframes)
+        (rand() & 3) == 0 && !debug_god_mode)
         hero_stun = 40;
       ebolt.active = false;
     } else if (map_attr_at(ebolt.x, ebolt.y) == MAP_WALL || !ebolt.range) {
@@ -1133,14 +1040,14 @@ static void resolve_attack(Mob *m) {
     if (m->attacks % 3 == 0) {
       fx_start(FX_NOVA, m->x, m->y, DOWN);
       if (dist <= 2)
-        hurt_hero(monster_damage(m) + monster_damage(m) / 2, false);
+        hurt_hero(cap16((uint32_t)monster_damage(m) * 3 / 2), false);
       return;
     }
     break;
   case AI_BREATH:
     if ((dx == 0 || dy == 0) && dist <= 3 && dist > 1) {
       fx_start(FX_NOVA, hero_x(), hero_y(), DOWN);
-      hurt_hero(monster_damage(m) + monster_damage(m) / 2, true);
+      hurt_hero(cap16((uint32_t)monster_damage(m) * 3 / 2), true);
       return;
     }
     break;
@@ -1149,7 +1056,7 @@ static void resolve_attack(Mob *m) {
   if (dist == 1) {
     hurt_hero(monster_damage(m), false);
     if ((mon->type == MONSTER_ZOMBIE || mon->type == MONSTER_GELATINOUS_CUBE)
-      && (rand() & 3) == 0)
+      && (rand() & 3) == 0 && !debug_god_mode)
       hero_poison = 150;
   } else {
     play_sound(sfx_miss);
@@ -1286,15 +1193,14 @@ static void facing_tile(int8_t *x, int8_t *y) {
 }
 
 static void basic_attack(void) {
-  const uint8_t agl = player.agl > 80 ? 80 : player.agl;
-  atk_cd = 24 - agl / 8;
-  if (buffs.haste) atk_cd >>= 1;
+  // 24 frames at 0% attack speed, down to 8 frames at 100%.
+  atk_cd = 24 - (uint8_t)((uint16_t)hs.aspd * 16 / 100);
   if (atk_cd < 8) atk_cd = 8;
 
   int8_t tx, ty;
   facing_tile(&tx, &ty);
 
-  if (use_magic()) {
+  if (hero_uses_magic()) {
     if (!pbolt.active) {
       fire_bolt(&pbolt, hero_x(), hero_y(), hero_direction, 100, SK_BOLT);
       play_sound(sfx_magic_missile);
@@ -1319,41 +1225,33 @@ static void start_dodge(Direction d, uint8_t steps) {
   play_sound(sfx_evade);
 }
 
-static void heal_hero(uint16_t amount) {
-  player.hp = player.hp + amount > player.max_hp ? player.max_hp :
-    player.hp + amount;
-  player_hp_and_sp_updated = true;
-}
-
 static bool cast_skill(uint8_t k) {
-  const SkillDef *s = skill_def(k);
-  const uint8_t rank = skill_rank[k];
-  if (rank == 0 || skill_cd[k])
+  SkillInfo s;
+  if (skill_rank[k] == 0 || skill_cd[k])
     return false;
-  const uint8_t cost = skill_cost(s, rank);
-  if (player.sp < cost)
+  skill_get(k, &s);
+  if (player.sp < s.cost)
     return false;
 
-  const uint16_t scaled = (uint16_t)s->power * (100 + 15 * (rank - 1)) / 100;
-  const uint8_t power = scaled > 255 ? 255 : (uint8_t)scaled;
-  const bool magic = use_magic();
+  const bool magic = hero_uses_magic();
+  const uint8_t rank = s.rank;
   int8_t tx, ty;
   facing_tile(&tx, &ty);
 
-  switch (s->kind) {
+  switch (s.kind) {
   case SK_STRIKE:
   case SK_STUN: {
     fx_start(FX_SLASH, tx, ty, hero_direction);
     Mob *m = mob_at(tx, ty);
     if (m)
-      hit_mob(m, power, magic, s->kind == SK_STUN ? 110 : 0);
+      hit_mob(m, s.power, magic, s.kind == SK_STUN ? 110 : 0);
     else
       play_sound(sfx_melee_attack);
     break;
   }
   case SK_CLEAVE:
     fx_start(FX_NOVA, hero_x(), hero_y(), DOWN);
-    if (!hit_area(hero_x(), hero_y(), 1, power, magic))
+    if (!hit_area(hero_x(), hero_y(), 1, s.power, magic))
       play_sound(sfx_melee_attack);
     break;
   case SK_BOLT:
@@ -1361,12 +1259,12 @@ static bool cast_skill(uint8_t k) {
   case SK_POISON:
     if (pbolt.active)
       return false;
-    fire_bolt(&pbolt, hero_x(), hero_y(), hero_direction, power, s->kind);
-    play_sound(s->kind == SK_POISON ? sfx_poison_spray : sfx_magic_missile);
+    fire_bolt(&pbolt, hero_x(), hero_y(), hero_direction, s.power, s.kind);
+    play_sound(s.kind == SK_POISON ? sfx_poison_spray : sfx_magic_missile);
     break;
   case SK_NOVA:
     fx_start(FX_NOVA, hero_x(), hero_y(), DOWN);
-    if (!hit_area(hero_x(), hero_y(), 3, power, true))
+    if (!hit_area(hero_x(), hero_y(), 3, s.power, true))
       play_sound(sfx_magic_missile);
     break;
   case SK_QUAKE: {
@@ -1375,7 +1273,7 @@ static bool cast_skill(uint8_t k) {
     bool any = false;
     for (uint8_t i = 0; i < MAX_MOBS; i++, m++) {
       if (m->active) {
-        hit_mob(m, power, true, 30);
+        hit_mob(m, s.power, true, 30);
         any = true;
       }
     }
@@ -1384,24 +1282,23 @@ static bool cast_skill(uint8_t k) {
     break;
   }
   case SK_HEAL:
-    heal_hero((uint16_t)((uint32_t)player.max_hp * power / 100) + 5);
+    heal_hero(cap16((uint32_t)player.max_hp * s.power / 100 + 5));
     fx_icon(T_HEAL, PAL_GREEN);
     play_sound(sfx_heal);
     break;
   case SK_RAGE:
-    buffs.atk = 600 + 60 * rank;
-    loot_recalc();
+    buff_apply(HERO_BUFF_ATK, 20 + 2 * rank, 600 + 30 * rank);
     fx_icon(T_UP, PAL_FX);
     play_sound(sfx_action_surge);
     break;
   case SK_GUARD:
-    buffs.def = 600 + 60 * rank;
-    loot_recalc();
+    buff_apply(HERO_BUFF_DEF, 20 + 2 * rank, 600 + 30 * rank);
+    buff_apply(HERO_BUFF_SHIELD, 10 + rank, 600);
     fx_icon(T_SHIELD, PAL_POP);
     play_sound(sfx_mid_powerup);
     break;
   case SK_HASTE:
-    buffs.haste = 600 + 60 * rank;
+    buff_apply(HERO_BUFF_HASTE, 30 + 2 * rank, 600 + 30 * rank);
     fx_icon(T_UP, PAL_GREEN);
     play_sound(sfx_action_surge);
     break;
@@ -1411,10 +1308,8 @@ static bool cast_skill(uint8_t k) {
     break;
   }
 
-  player.sp -= cost;
-  skill_cd[k] = kind_cooldown[s->kind];
-  if (buffs.haste)
-    skill_cd[k] >>= 1;
+  player.sp -= s.cost;
+  skill_cd[k] = s.cooldown;
   player_hp_and_sp_updated = true;
   hud_dirty = true;
   return true;
@@ -1487,6 +1382,7 @@ static void clear_mobs(void) {
 }
 
 static void end_combat(bool victory) {
+  char num[12];
   arpg_in_combat = false;
   clear_mobs();
   arpg_restore_npcs = true;
@@ -1495,18 +1391,16 @@ static void end_combat(bool victory) {
     return;
 
   char *p = msg + strlen(msg);
-  const uint8_t before = player.level;
-  const bool leveled = level_up(xp_gain);
-  if (leveled) {
-    loot_on_level_up(player.level - before);
-    sprintf(p, "\n+%uXP LEVEL %u!", xp_gain, player.level);
+  u32_str(xp_gain, num);
+  const uint8_t gained = progress_add_xp(xp_gain);
+  if (gained) {
+    sprintf(p, "\n+%sXP LEVEL %u!", num, hero_level);
     play_sound(sfx_level_up);
     fx_icon(T_UP, PAL_FX);
   } else {
-    sprintf(p, "\n+%uXP  %uG", xp_gain, loot_gold);
+    sprintf(p, "\n+%sXP", num);
     play_sound(sfx_battle_success);
   }
-  loot_recalc();
   player_hp_and_sp_updated = true;
 
   encounter.victory = true;
@@ -1514,19 +1408,22 @@ static void end_combat(bool victory) {
     arpg_credits_pending = true;
 
   // Only interrupt play with a message if something notable happened.
-  msg_pending = leveled || drops > 0 || encounter.on_victory != NULL ||
+  msg_pending = gained || drops > 0 || encounter.on_victory != NULL ||
     encounter.is_final_boss;
 }
 
 static void player_defeated(void) {
+  char num[12];
   arpg_in_combat = false;
   clear_mobs();
   arpg_restore_npcs = true;
   encounter.on_victory = NULL;
   encounter.victory = false;
-  uint16_t lost = loot_gold / 10;
+  const uint32_t lost = loot_gold / 10;
   loot_gold -= lost;
-  sprintf(msg, "You were defeated!\nLost %u gold.", lost);
+  buff_clear();
+  u32_str(lost, num);
+  sprintf(msg, "You were defeated!\nLost %s gold.", num);
   msg_pending = true;
   death_pending = true;
   play_sound(sfx_battle_death);
@@ -1573,10 +1470,12 @@ void arpg_floor_changed(void) BANKED {
   clear_mobs();
   reset_hero_state();
   arpg_block_input = false;
-  if (buffs.atk || buffs.def) {
-    buffs.atk = 0;
-    buffs.def = 0;
-  }
+}
+
+void arpg_reset_cooldowns(void) BANKED {
+  memset(skill_cd, 0, sizeof(skill_cd));
+  hero_poison = 0;
+  hero_stun = 0;
 }
 
 bool arpg_tile_blocked(int8_t x, int8_t y) BANKED {
@@ -1596,27 +1495,19 @@ bool arpg_fast_move(void) BANKED {
   return fast;
 }
 
-static void update_buffs(void) {
-  bool changed = false;
-  if (buffs.atk && --buffs.atk == 0) changed = true;
-  if (buffs.def && --buffs.def == 0) changed = true;
-  if (buffs.haste) buffs.haste--;
-  if (changed)
-    loot_recalc();
-}
-
 static void update_regen(void) {
   if (player.hp == 0)
     return;
-  const uint8_t hp_rate = arpg_in_combat ? 127 : 31;
-  const uint8_t sp_rate = arpg_in_combat ? 127 : 63;
-  if ((tick & hp_rate) == 0 && player.hp < player.max_hp)
-    heal_hero(1 + (arpg_in_combat ? 0 : player.max_hp / 50));
-  if ((tick & 127) == 64 && loot_bonus.regen)
-    heal_hero(loot_bonus.regen);
-  if ((tick & sp_rate) == 0 && player.sp < player.max_sp) {
-    player.sp++;
-    player_hp_and_sp_updated = true;
+  // Every 2 seconds in combat, every half second outside of it.
+  const uint8_t rate = arpg_in_combat ? 127 : 31;
+  if ((tick & rate) == 0) {
+    if (player.hp < player.max_hp)
+      heal_hero(hs.hp_regen);
+    if (player.sp < player.max_sp) {
+      const uint32_t sp = (uint32_t)player.sp + hs.sp_regen;
+      player.sp = sp > player.max_sp ? player.max_sp : (uint16_t)sp;
+      player_hp_and_sp_updated = true;
+    }
   }
   if (hero_poison) {
     hero_poison--;
@@ -1674,7 +1565,7 @@ void arpg_update(void) BANKED {
     }
   }
 
-  update_buffs();
+  buff_tick();
   update_regen();
 
   const bool active = map_state == MAP_STATE_WAITING ||
@@ -1733,25 +1624,19 @@ void arpg_update(void) BANKED {
   show_pending_messages();
 }
 
-//------------------------------------------------------------------------------
-// Skill info (for menus)
-//------------------------------------------------------------------------------
+void arpg_hotbar_name(uint8_t entry, char *buf) BANKED {
+  hotbar_entry_name(entry, buf);
+}
 
 void arpg_skill_name(uint8_t k, char *buf) BANKED {
-  strcpy(buf, k < SKILL_COUNT ? skill_def(k)->name : "-");
+  skill_name(k, buf);
 }
 
 void arpg_skill_info(uint8_t k, char *buf) BANKED {
-  if (k >= SKILL_COUNT) {
-    buf[0] = 0;
-    return;
-  }
-  const SkillDef *s = skill_def(k);
-  const uint8_t rank = skill_rank[k] ? skill_rank[k] : 1;
-  sprintf(buf, "%s %c%u", kind_info[s->kind], is_magic_class() ? 'M' : 'S',
-    skill_cost(s, rank));
+  skill_info_text(k, buf);
 }
 
 uint8_t arpg_skill_level(uint8_t k) BANKED {
-  return k < SKILL_COUNT ? skill_levels[k] : 99;
+  const uint16_t level = skill_unlock_level(k);
+  return level > 255 ? 255 : (uint8_t)level;
 }

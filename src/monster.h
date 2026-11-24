@@ -44,6 +44,51 @@ typedef enum MonsterType {
   MONSTER_DUMMY = 0xFF, // Small
 } MonsterType;
 
+/** D&D 5e creature type; tags below are stored separately as subtype. */
+typedef enum DndCreatureType {
+  DND_ABERRATION,
+  DND_BEAST,
+  DND_CELESTIAL,
+  DND_CONSTRUCT,
+  DND_DRAGON,
+  DND_ELEMENTAL,
+  DND_FEY,
+  DND_FIEND,
+  DND_GIANT,
+  DND_HUMANOID,
+  DND_MONSTROSITY,
+  DND_OOZE,
+  DND_PLANT,
+  DND_UNDEAD,
+} DndCreatureType;
+
+/** D&D-style subtype tags for this game's existing monster roster. */
+typedef enum MonsterSubtype {
+  MONSTER_SUBTYPE_NONE,
+  MONSTER_SUBTYPE_KOBOLD,
+  MONSTER_SUBTYPE_GOBLINOID,
+  MONSTER_SUBTYPE_OWLBEAR,
+  MONSTER_SUBTYPE_GELATINOUS,
+  MONSTER_SUBTYPE_DISPLACER_BEAST,
+  MONSTER_SUBTYPE_WILL_O_WISP,
+  MONSTER_SUBTYPE_DEATH_KNIGHT,
+  MONSTER_SUBTYPE_MIND_FLAYER,
+  MONSTER_SUBTYPE_BEHOLDER,
+  MONSTER_SUBTYPE_DRAGON,
+  MONSTER_SUBTYPE_ZOMBIE,
+} MonsterSubtype;
+
+/** Gameplay role (not a D&D rules type): informs AI/encounter design. */
+typedef enum MonsterClass {
+  MONSTER_CLASS_SKIRMISHER,
+  MONSTER_CLASS_BRUTE,
+  MONSTER_CLASS_LURKER,
+  MONSTER_CLASS_CONTROLLER,
+  MONSTER_CLASS_SOLDIER,
+  MONSTER_CLASS_ARTILLERY,
+  MONSTER_CLASS_BOSS,
+} MonsterClass;
+
 /**
  * An instance of a monster that is used for battle.
  */
@@ -52,6 +97,9 @@ typedef struct Monster {
    * The id for the type of monster.
    */
   MonsterType type;
+  uint8_t creature_type;
+  uint8_t subtype;
+  uint8_t monster_class;
   /**
    * The tileset used by the instance.
    */

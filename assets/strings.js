@@ -472,22 +472,16 @@ addNamespace('credits', 1, {
   'story3_3': 'The dungeon and',
   'story3_4': '   the dragon.',
 
-  'developed_by': 'DEVELOPED BY',
   'programming': 'PROGRAMMING',
   'game_design': 'GAME DESIGN',
   'monster_art': 'MONSTER ART',
   'title_art': 'TITLE ART',
   'dungeon_art': 'DUNGEON ART',
 
-  'neshacker': 'NESHACKER',
   'ryan': 'Ryan Richards',
   'tommy': 'Tommy',
   'mono': 'Mono',
   'ledu': 'Ledu',
-  'patreon': 'SPECIAL THANKS',
-  'nh_patreon': 'NesHacker Patreon',
-  'nh_patreon2': 'patreon.com/',
-  'nh_patreon3': '   NesHacker',
 
   'thank_you': 'Thank you',
   'for_playing': 'for playing!',

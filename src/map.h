@@ -1015,25 +1015,13 @@ typedef enum MapMenuState {
 /**
  * Cursor positions for the map menu.
  */
-typedef enum MapMenuCursor {
-  MAP_MENU_CURSOR_SAVE,
-  MAP_MENU_CURSOR_CHARACTER,
-  MAP_MENU_CURSOR_GEAR,
-  MAP_MENU_CURSOR_SETTINGS,
-  MAP_MENU_CURSOR_QUIT,
-} MapMenuCursor;
-
-/**
- * Number of entries in the map menu.
- */
-#define MAP_MENU_CURSOR_COUNT 5
-
 /**
  * Map menu state data.
  */
 typedef struct MapMenu {
   MapMenuState state;
-  MapMenuCursor cursor;
+  uint8_t cursor;
+  uint8_t page;
 } MapMenu;
 
 /**

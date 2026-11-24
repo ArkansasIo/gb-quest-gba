@@ -1057,10 +1057,6 @@ void sfx_falling(void) {
   register_init(&nr14, trigger_falling);
 }
 
-void sfx_neshacker_presents(void) {
-  sfx_magic_missile();
-}
-
 const uint8_t noise_title_fire[] = {
   4, noise_freq(8, 0, 1),
   4, noise_freq(8, 0, 1),

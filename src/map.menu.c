@@ -104,7 +104,8 @@ void update_map_menu_stats(void) {
 
 void init_map_menu(void) {
   core.draw_tilemap(map_menu_tilemap, VRAM_WINDOW_XY(MAP_MENU_X, MAP_MENU_Y));
-  map_menu.cursor = MAP_MENU_CURSOR_SAVE;
+  map_menu.cursor = 0;
+  map_menu.page = 0;
 
   set_sprite_tile(CURSOR_SPRITE_ID + 0, CURSOR_TILE_ID + 0u);
   set_sprite_tile(CURSOR_SPRITE_ID + 1, CURSOR_TILE_ID + 1u);
@@ -131,7 +132,7 @@ void show_map_menu(void) {
   core.load_bg_palette(main_menu_palette, 7, 1);
   clear_map_sprites();
   update_map_menu_stats();
-  arpg_menu_draw_entries();
+  arpg_menu_draw_entries(map_menu.page);
   update_cursor();
 
   play_sound(sfx_next_round);
@@ -154,7 +155,7 @@ void update_map_menu(void) {
     arpg_menu_returned = false;
     // Returning from a screen: refresh stats and the cursor.
     update_map_menu_stats();
-    arpg_menu_draw_entries();
+    arpg_menu_draw_entries(map_menu.page);
     update_cursor();
   }
 
@@ -172,12 +173,24 @@ void update_map_menu(void) {
     update_cursor();
   }
 
+  if (was_pressed(J_SELECT)) {
+    map_menu.page = (map_menu.page + 1) % ARPG_MENU_PAGE_COUNT;
+    map_menu.cursor = 0;
+    arpg_menu_draw_entries(map_menu.page);
+    update_cursor();
+    play_sound(sfx_menu_move);
+  }
+
   if (was_pressed(J_START) || was_pressed(J_B)) {
     hide_map_menu();
   } else if (was_pressed(J_A)) {
-    if (map_menu.cursor == ARPG_MENU_RETURN) {
-      hide_map_menu();
-    } else if (arpg_menu_open(map_menu.cursor)) {
+    const uint8_t entry = map_menu.page * ARPG_MENU_PAGE_SIZE + map_menu.cursor;
+    if (entry == ARPG_MENU_MORE) {
+      map_menu.page = 1;
+      map_menu.cursor = 0;
+      arpg_menu_draw_entries(map_menu.page);
+      update_cursor();
+    } else if (arpg_menu_open(entry)) {
       play_sound(sfx_menu_move);
     } else {
       play_sound(sfx_error);

@@ -26,11 +26,9 @@ typedef enum TextPage {
   CREDIT_TEXT_STORY1 = 0,
   CREDIT_TEXT_STORY2 = 1,
   CREDIT_TEXT_STORY3 = 2,
-  CREDIT_TEXT_DEVELOPED_BY = 3,
-  CREDIT_TEXT_PROG_DESIGN = 4,
-  CREDIT_TEXT_ART = 5,
-  CREDIT_TEXT_PATREON = 6,
-  CREDIT_TEXT_THANK_YOU = 7,
+  CREDIT_TEXT_PROG_DESIGN = 3,
+  CREDIT_TEXT_ART = 4,
+  CREDIT_TEXT_THANK_YOU = 5,
 } TextPage;
 
 palette_color_t credits_palette[] = {
@@ -65,10 +63,6 @@ void next_text_page(void) {
     core.draw_text(VRAM_BACKGROUND_XY(1, 9), str_credits_story3_3, 21);
     core.draw_text(VRAM_BACKGROUND_XY(1, 10), str_credits_story3_4, 21);
     break;
-  case CREDIT_TEXT_DEVELOPED_BY:
-    core.draw_text(VRAM_BACKGROUND_XY(4, 7), str_credits_developed_by, 20);
-    core.draw_text(VRAM_BACKGROUND_XY(4, 8), str_credits_neshacker, 20);
-    break;
   case CREDIT_TEXT_PROG_DESIGN:
     core.draw_text(VRAM_BACKGROUND_XY(3, 6), str_credits_programming, 20);
     core.draw_text(VRAM_BACKGROUND_XY(3, 7), str_credits_ryan, 20);
@@ -86,12 +80,6 @@ void next_text_page(void) {
 
     core.draw_text(VRAM_BACKGROUND_XY(3, 11), str_credits_title_art, 20);
     core.draw_text(VRAM_BACKGROUND_XY(3, 12), str_credits_mono, 20);
-    break;
-  case CREDIT_TEXT_PATREON:
-    core.draw_text(VRAM_BACKGROUND_XY(3, 5), str_credits_patreon, 20);
-    core.draw_text(VRAM_BACKGROUND_XY(1, 7), str_credits_nh_patreon, 20);
-    core.draw_text(VRAM_BACKGROUND_XY(2, 9), str_credits_nh_patreon2, 20);
-    core.draw_text(VRAM_BACKGROUND_XY(2, 10), str_credits_nh_patreon3, 20);
     break;
   case CREDIT_TEXT_THANK_YOU:
     core.draw_text(VRAM_BACKGROUND_XY(4, 8), str_credits_thank_you, 20);
