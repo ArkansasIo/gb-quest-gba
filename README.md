@@ -105,3 +105,11 @@ The ROM remains playable offline. Internet multiplayer requires the separate ser
 - The parchment-style Aelmoor map is a visual concept; the GBC interface should use a simplified tile-based map.
 
 **Runtime status:** the current playable cartridge still uses its original 72-zone (9×8) grid. The 90-zone atlas and data model are committed as the next world-design foundation; the cartridge runtime, save bitset, zone transitions, biome scaling, and world-map UI have not yet been migrated or tested for 90 zones.
+
+
+## 12-Act Campaign and Instance Atlas
+
+- [12-act story, main quests, side quests, and instance catalog](docs/CAMPAIGN_AND_INSTANCE_ATLAS.md).
+- [Canonical campaign and map data](data/campaign_and_instances.json): 60 main quests, 36 side quests, 42 dungeon maps, 9 raid maps, 42 trial maps, and 18 towers with 100-floor progression maps each.
+
+These are original fantasy-game materials informed by broad fifth-edition tabletop play patterns, not copied D&D adventure text, settings, stat blocks, or published maps. Instance maps are currently logical node layouts and floor templates; finished GBC tilemaps and playable quest/instance runtime integration remain future implementation work.
