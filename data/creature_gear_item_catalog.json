@@ -1,0 +1,1780 @@
+{
+  "schemaVersion": 1,
+  "world": "Aelmoor",
+  "creatures": [
+    {
+      "id": "M001",
+      "name": "Mossfang Wolf",
+      "creatureType": "beast",
+      "role": "skirmisher",
+      "realm": "Verdant Crown",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "skirmisher strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_1",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M002",
+      "name": "Briarback Boar",
+      "creatureType": "beast",
+      "role": "brute",
+      "realm": "Verdant Crown",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "brute strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_1",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M003",
+      "name": "Glimmerwing Sprite",
+      "creatureType": "fey",
+      "role": "support",
+      "realm": "Verdant Crown",
+      "damageType": "light",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "support strike",
+        "light technique",
+        "realm response"
+      ],
+      "lootTable": "realm_1",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M004",
+      "name": "Rootbound Treant",
+      "creatureType": "plant",
+      "role": "controller",
+      "realm": "Verdant Crown",
+      "damageType": "earth",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "controller strike",
+        "earth technique",
+        "realm response"
+      ],
+      "lootTable": "realm_1",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M005",
+      "name": "Marchland Raider",
+      "creatureType": "humanoid",
+      "role": "soldier",
+      "realm": "Sunward Marches",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "soldier strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_2",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M006",
+      "name": "Sunmane Lion",
+      "creatureType": "beast",
+      "role": "brute",
+      "realm": "Sunward Marches",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "brute strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_2",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M007",
+      "name": "Dustveil Harrier",
+      "creatureType": "monstrosity",
+      "role": "skirmisher",
+      "realm": "Saffron Expanse",
+      "damageType": "air",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "skirmisher strike",
+        "air technique",
+        "realm response"
+      ],
+      "lootTable": "realm_3",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M008",
+      "name": "Glass Dune Basilisk",
+      "creatureType": "monstrosity",
+      "role": "controller",
+      "realm": "Saffron Expanse",
+      "damageType": "earth",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "controller strike",
+        "earth technique",
+        "realm response"
+      ],
+      "lootTable": "realm_3",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M009",
+      "name": "Mireling",
+      "creatureType": "undead",
+      "role": "lurker",
+      "realm": "Mireveil Basin",
+      "damageType": "poison",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "lurker strike",
+        "poison technique",
+        "realm response"
+      ],
+      "lootTable": "realm_4",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M010",
+      "name": "Bog Wretch",
+      "creatureType": "undead",
+      "role": "brute",
+      "realm": "Mireveil Basin",
+      "damageType": "poison",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "brute strike",
+        "poison technique",
+        "realm response"
+      ],
+      "lootTable": "realm_4",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M011",
+      "name": "Lantern Wisp",
+      "creatureType": "undead",
+      "role": "artillery",
+      "realm": "Mireveil Basin",
+      "damageType": "dark",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "artillery strike",
+        "dark technique",
+        "realm response"
+      ],
+      "lootTable": "realm_4",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M012",
+      "name": "Mire Hag",
+      "creatureType": "fey",
+      "role": "controller",
+      "realm": "Mireveil Basin",
+      "damageType": "dark",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "controller strike",
+        "dark technique",
+        "realm response"
+      ],
+      "lootTable": "realm_4",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M013",
+      "name": "Crownspine Goat",
+      "creatureType": "beast",
+      "role": "skirmisher",
+      "realm": "Crownspine Highlands",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "skirmisher strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_5",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M014",
+      "name": "Granite Troll",
+      "creatureType": "giant",
+      "role": "brute",
+      "realm": "Crownspine Highlands",
+      "damageType": "earth",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "brute strike",
+        "earth technique",
+        "realm response"
+      ],
+      "lootTable": "realm_5",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M015",
+      "name": "Rimewing Roc",
+      "creatureType": "monstrosity",
+      "role": "artillery",
+      "realm": "Crownspine Highlands",
+      "damageType": "air",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "artillery strike",
+        "air technique",
+        "realm response"
+      ],
+      "lootTable": "realm_5",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M016",
+      "name": "Ironbound Sentinel",
+      "creatureType": "construct",
+      "role": "soldier",
+      "realm": "Crownspine Highlands",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "soldier strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_5",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M017",
+      "name": "Reef Marauder",
+      "creatureType": "humanoid",
+      "role": "skirmisher",
+      "realm": "Shattercoast",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "skirmisher strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_6",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M018",
+      "name": "Tideglass Eel",
+      "creatureType": "beast",
+      "role": "lurker",
+      "realm": "Shattercoast",
+      "damageType": "lightning",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "lurker strike",
+        "lightning technique",
+        "realm response"
+      ],
+      "lootTable": "realm_6",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M019",
+      "name": "Abyssal Siren",
+      "creatureType": "monstrosity",
+      "role": "controller",
+      "realm": "Shattercoast",
+      "damageType": "water",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "controller strike",
+        "water technique",
+        "realm response"
+      ],
+      "lootTable": "realm_6",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M020",
+      "name": "Coral Golem",
+      "creatureType": "construct",
+      "role": "soldier",
+      "realm": "Shattercoast",
+      "damageType": "water",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "soldier strike",
+        "water technique",
+        "realm response"
+      ],
+      "lootTable": "realm_6",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M021",
+      "name": "Frosthowl Hound",
+      "creatureType": "beast",
+      "role": "skirmisher",
+      "realm": "Northfrost Reach",
+      "damageType": "frost",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "skirmisher strike",
+        "frost technique",
+        "realm response"
+      ],
+      "lootTable": "realm_7",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M022",
+      "name": "Glacier Revenant",
+      "creatureType": "undead",
+      "role": "soldier",
+      "realm": "Northfrost Reach",
+      "damageType": "frost",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "soldier strike",
+        "frost technique",
+        "realm response"
+      ],
+      "lootTable": "realm_7",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M023",
+      "name": "Aurora Witch",
+      "creatureType": "humanoid",
+      "role": "controller",
+      "realm": "Northfrost Reach",
+      "damageType": "light",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "controller strike",
+        "light technique",
+        "realm response"
+      ],
+      "lootTable": "realm_7",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M024",
+      "name": "Icehorn Mammoth",
+      "creatureType": "beast",
+      "role": "brute",
+      "realm": "Northfrost Reach",
+      "damageType": "physical",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "brute strike",
+        "physical technique",
+        "realm response"
+      ],
+      "lootTable": "realm_7",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M025",
+      "name": "Cinder Imp",
+      "creatureType": "fiend",
+      "role": "lurker",
+      "realm": "Emberfall Dominion",
+      "damageType": "fire",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "lurker strike",
+        "fire technique",
+        "realm response"
+      ],
+      "lootTable": "realm_8",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M026",
+      "name": "Ashen Juggernaut",
+      "creatureType": "construct",
+      "role": "brute",
+      "realm": "Emberfall Dominion",
+      "damageType": "fire",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "brute strike",
+        "fire technique",
+        "realm response"
+      ],
+      "lootTable": "realm_8",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M027",
+      "name": "Magma Serpent",
+      "creatureType": "elemental",
+      "role": "skirmisher",
+      "realm": "Emberfall Dominion",
+      "damageType": "fire",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "skirmisher strike",
+        "fire technique",
+        "realm response"
+      ],
+      "lootTable": "realm_8",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M028",
+      "name": "Ember Cult Adept",
+      "creatureType": "humanoid",
+      "role": "artillery",
+      "realm": "Emberfall Dominion",
+      "damageType": "fire",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "artillery strike",
+        "fire technique",
+        "realm response"
+      ],
+      "lootTable": "realm_8",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M029",
+      "name": "Sporebound Thrall",
+      "creatureType": "plant",
+      "role": "soldier",
+      "realm": "The Underdeep",
+      "damageType": "poison",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "soldier strike",
+        "poison technique",
+        "realm response"
+      ],
+      "lootTable": "realm_9",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M030",
+      "name": "Crystal Devourer",
+      "creatureType": "aberration",
+      "role": "lurker",
+      "realm": "The Underdeep",
+      "damageType": "arcane",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "lurker strike",
+        "arcane technique",
+        "realm response"
+      ],
+      "lootTable": "realm_9",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M031",
+      "name": "Hollow Mind",
+      "creatureType": "aberration",
+      "role": "controller",
+      "realm": "The Underdeep",
+      "damageType": "void",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "controller strike",
+        "void technique",
+        "realm response"
+      ],
+      "lootTable": "realm_9",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    },
+    {
+      "id": "M032",
+      "name": "Deepstone Behemoth",
+      "creatureType": "giant",
+      "role": "brute",
+      "realm": "The Underdeep",
+      "damageType": "earth",
+      "levelRange": [
+        1,
+        720
+      ],
+      "scaling": "formula_by_level_and_rank",
+      "resistances": [],
+      "immunities": [],
+      "weaknesses": [],
+      "abilities": [
+        "brute strike",
+        "earth technique",
+        "realm response"
+      ],
+      "lootTable": "realm_9",
+      "variants": [
+        "normal",
+        "elite"
+      ]
+    }
+  ],
+  "bosses": [
+    {
+      "id": "B001",
+      "name": "The Star-Eater Herald",
+      "rank": "arc_boss",
+      "realm": "Verdant Crown",
+      "damageType": "void",
+      "levelRange": [
+        60,
+        120
+      ],
+      "partySize": "8-12",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_1"
+    },
+    {
+      "id": "B002",
+      "name": "The Gilded Justiciar",
+      "rank": "act_boss",
+      "realm": "Sunward Marches",
+      "damageType": "light",
+      "levelRange": [
+        115,
+        175
+      ],
+      "partySize": "1-5",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_2"
+    },
+    {
+      "id": "B003",
+      "name": "The Thornbound Matriarch",
+      "rank": "world_boss",
+      "realm": "Verdant Crown",
+      "damageType": "earth",
+      "levelRange": [
+        170,
+        230
+      ],
+      "partySize": "12-24",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_3"
+    },
+    {
+      "id": "B004",
+      "name": "The Drowned Cantor",
+      "rank": "act_boss",
+      "realm": "Mireveil Basin",
+      "damageType": "water",
+      "levelRange": [
+        225,
+        285
+      ],
+      "partySize": "1-5",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_4"
+    },
+    {
+      "id": "B005",
+      "name": "The Glass Vizier",
+      "rank": "act_boss",
+      "realm": "Saffron Expanse",
+      "damageType": "arcane",
+      "levelRange": [
+        280,
+        340
+      ],
+      "partySize": "1-5",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_5"
+    },
+    {
+      "id": "B006",
+      "name": "The Leviathan's Envoy",
+      "rank": "world_boss",
+      "realm": "Shattercoast",
+      "damageType": "water",
+      "levelRange": [
+        335,
+        395
+      ],
+      "partySize": "12-24",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_6"
+    },
+    {
+      "id": "B007",
+      "name": "The Pale Regent",
+      "rank": "act_boss",
+      "realm": "Northfrost Reach",
+      "damageType": "frost",
+      "levelRange": [
+        390,
+        450
+      ],
+      "partySize": "1-5",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_7"
+    },
+    {
+      "id": "B008",
+      "name": "Varkhul, Ember-Crowned",
+      "rank": "act_boss",
+      "realm": "Emberfall Dominion",
+      "damageType": "fire",
+      "levelRange": [
+        445,
+        505
+      ],
+      "partySize": "1-5",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_8"
+    },
+    {
+      "id": "B009",
+      "name": "The Hollow Cartographer",
+      "rank": "arc_boss",
+      "realm": "The Underdeep",
+      "damageType": "void",
+      "levelRange": [
+        500,
+        560
+      ],
+      "partySize": "8-12",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_9"
+    },
+    {
+      "id": "B010",
+      "name": "The Ninefold Marshal",
+      "rank": "world_boss",
+      "realm": "Crownspine Highlands",
+      "damageType": "physical",
+      "levelRange": [
+        555,
+        615
+      ],
+      "partySize": "12-24",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_10"
+    },
+    {
+      "id": "B011",
+      "name": "The Labyrinth Architect",
+      "rank": "arc_boss",
+      "realm": "The Underdeep",
+      "damageType": "arcane",
+      "levelRange": [
+        610,
+        670
+      ],
+      "partySize": "8-12",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_11"
+    },
+    {
+      "id": "B012",
+      "name": "The Unbound Dragon",
+      "rank": "arc_boss",
+      "realm": "Emberfall Dominion",
+      "damageType": "fire",
+      "levelRange": [
+        665,
+        720
+      ],
+      "partySize": "8-12",
+      "phases": [
+        {
+          "trigger": 100,
+          "name": "Opening",
+          "mechanics": [
+            "signature attack",
+            "summoned adds"
+          ]
+        },
+        {
+          "trigger": 66,
+          "name": "Escalation",
+          "mechanics": [
+            "arena hazard",
+            "new attack pattern"
+          ]
+        },
+        {
+          "trigger": 33,
+          "name": "Final stand",
+          "mechanics": [
+            "enrage timer",
+            "desperation attack"
+          ]
+        }
+      ],
+      "telegraph": true,
+      "lootTable": "boss_12"
+    }
+  ],
+  "weapons": [
+    {
+      "id": "W001",
+      "name": "Wayfarer's Edge",
+      "archetype": "sword",
+      "damageType": "physical",
+      "hand": "one_hand",
+      "baseAttack": 12,
+      "baseMagicAttack": 4,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W002",
+      "name": "Kingsfall Greatblade",
+      "archetype": "greatsword",
+      "damageType": "physical",
+      "hand": "two_hand",
+      "baseAttack": 15,
+      "baseMagicAttack": 0,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W003",
+      "name": "Thornwake Spear",
+      "archetype": "spear",
+      "damageType": "physical",
+      "hand": "two_hand",
+      "baseAttack": 18,
+      "baseMagicAttack": 0,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W004",
+      "name": "Gloamfang Daggers",
+      "archetype": "dual_blades",
+      "damageType": "physical",
+      "hand": "two_hand",
+      "baseAttack": 21,
+      "baseMagicAttack": 0,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W005",
+      "name": "Starcall Staff",
+      "archetype": "staff",
+      "damageType": "arcane",
+      "hand": "two_hand",
+      "baseAttack": 24,
+      "baseMagicAttack": 18,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W006",
+      "name": "Ashen Longbow",
+      "archetype": "bow",
+      "damageType": "physical",
+      "hand": "two_hand",
+      "baseAttack": 27,
+      "baseMagicAttack": 0,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W007",
+      "name": "Oathkeeper Mace",
+      "archetype": "mace",
+      "damageType": "light",
+      "hand": "one_hand",
+      "baseAttack": 30,
+      "baseMagicAttack": 8,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W008",
+      "name": "Stormglass Wand",
+      "archetype": "wand",
+      "damageType": "lightning",
+      "hand": "one_hand",
+      "baseAttack": 33,
+      "baseMagicAttack": 20,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W009",
+      "name": "Gravetide Scythe",
+      "archetype": "scythe",
+      "damageType": "dark",
+      "hand": "two_hand",
+      "baseAttack": 36,
+      "baseMagicAttack": 8,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W010",
+      "name": "Wyrmfire Axe",
+      "archetype": "axe",
+      "damageType": "fire",
+      "hand": "two_hand",
+      "baseAttack": 39,
+      "baseMagicAttack": 0,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W011",
+      "name": "Moonlit Rapier",
+      "archetype": "rapier",
+      "damageType": "physical",
+      "hand": "one_hand",
+      "baseAttack": 42,
+      "baseMagicAttack": 0,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "W012",
+      "name": "Deepstone Hammer",
+      "archetype": "hammer",
+      "damageType": "earth",
+      "hand": "two_hand",
+      "baseAttack": 45,
+      "baseMagicAttack": 0,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    }
+  ],
+  "armor": [
+    {
+      "id": "A001",
+      "name": "Greenwarden Hauberk",
+      "slot": "chest",
+      "weight": "heavy",
+      "baseDefense": 10,
+      "baseMagicDefense": 5,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A002",
+      "name": "Stoneheart Plate",
+      "slot": "chest",
+      "weight": "medium",
+      "baseDefense": 12,
+      "baseMagicDefense": 8,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A003",
+      "name": "Mistweave Robe",
+      "slot": "chest",
+      "weight": "light",
+      "baseDefense": 14,
+      "baseMagicDefense": 11,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A004",
+      "name": "Frostbound Mantle",
+      "slot": "chest",
+      "weight": "heavy",
+      "baseDefense": 16,
+      "baseMagicDefense": 14,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A005",
+      "name": "Cinderforged Harness",
+      "slot": "chest",
+      "weight": "medium",
+      "baseDefense": 18,
+      "baseMagicDefense": 5,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A006",
+      "name": "Nightglass Vest",
+      "slot": "chest",
+      "weight": "light",
+      "baseDefense": 20,
+      "baseMagicDefense": 8,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A007",
+      "name": "Dawnspire Helm",
+      "slot": "head",
+      "weight": "heavy",
+      "baseDefense": 22,
+      "baseMagicDefense": 11,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A008",
+      "name": "Thorncrown Hood",
+      "slot": "head",
+      "weight": "medium",
+      "baseDefense": 24,
+      "baseMagicDefense": 14,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A009",
+      "name": "Deepdelver Greaves",
+      "slot": "legs",
+      "weight": "light",
+      "baseDefense": 26,
+      "baseMagicDefense": 5,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A010",
+      "name": "Stormguard Boots",
+      "slot": "feet",
+      "weight": "heavy",
+      "baseDefense": 28,
+      "baseMagicDefense": 8,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A011",
+      "name": "Runesmith Gloves",
+      "slot": "hands",
+      "weight": "medium",
+      "baseDefense": 30,
+      "baseMagicDefense": 11,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    },
+    {
+      "id": "A012",
+      "name": "Wyrmhide Cloak",
+      "slot": "back",
+      "weight": "light",
+      "baseDefense": 32,
+      "baseMagicDefense": 14,
+      "upgradeCap": 10,
+      "affixSlots": 3
+    }
+  ],
+  "items": [
+    {
+      "id": "I001",
+      "name": "Minor Healing Draught",
+      "category": "consumable",
+      "effect": "restore 20% maximum HP",
+      "stackLimit": 20,
+      "tradeable": true,
+      "vendorValue": 5
+    },
+    {
+      "id": "I002",
+      "name": "Greater Healing Draught",
+      "category": "consumable",
+      "effect": "restore 45% maximum HP",
+      "stackLimit": 20,
+      "tradeable": true,
+      "vendorValue": 12
+    },
+    {
+      "id": "I003",
+      "name": "Aether Tonic",
+      "category": "consumable",
+      "effect": "restore 35% maximum SP",
+      "stackLimit": 20,
+      "tradeable": true,
+      "vendorValue": 19
+    },
+    {
+      "id": "I004",
+      "name": "Phoenix Elixir",
+      "category": "consumable",
+      "effect": "restore HP and SP fully",
+      "stackLimit": 20,
+      "tradeable": true,
+      "vendorValue": 26
+    },
+    {
+      "id": "I005",
+      "name": "Antivenom",
+      "category": "consumable",
+      "effect": "remove poison",
+      "stackLimit": 20,
+      "tradeable": true,
+      "vendorValue": 33
+    },
+    {
+      "id": "I006",
+      "name": "Purifying Salt",
+      "category": "consumable",
+      "effect": "remove one curse",
+      "stackLimit": 20,
+      "tradeable": true,
+      "vendorValue": 40
+    },
+    {
+      "id": "I007",
+      "name": "Ironbark Meal",
+      "category": "food",
+      "effect": "temporary defense and regeneration",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 47
+    },
+    {
+      "id": "I008",
+      "name": "Wayfarer Ration",
+      "category": "food",
+      "effect": "restore HP and SP outside combat",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 54
+    },
+    {
+      "id": "I009",
+      "name": "Ember Rune",
+      "category": "rune",
+      "effect": "add fire damage",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 61
+    },
+    {
+      "id": "I010",
+      "name": "Glacier Rune",
+      "category": "rune",
+      "effect": "add frost damage",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 68
+    },
+    {
+      "id": "I011",
+      "name": "Ward Rune",
+      "category": "rune",
+      "effect": "add elemental resistance",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 75
+    },
+    {
+      "id": "I012",
+      "name": "Haste Rune",
+      "category": "rune",
+      "effect": "increase attack speed",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 82
+    },
+    {
+      "id": "I013",
+      "name": "Star Shard",
+      "category": "crafting_material",
+      "effect": "forge upgrade material",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 89
+    },
+    {
+      "id": "I014",
+      "name": "Wyrm Scale",
+      "category": "crafting_material",
+      "effect": "dragon armor component",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 96
+    },
+    {
+      "id": "I015",
+      "name": "Voidglass",
+      "category": "crafting_material",
+      "effect": "void weapon component",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 103
+    },
+    {
+      "id": "I016",
+      "name": "Lifeweave Thread",
+      "category": "crafting_material",
+      "effect": "relic and armor component",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 110
+    },
+    {
+      "id": "I017",
+      "name": "Ancient Seal",
+      "category": "key",
+      "effect": "open a realm vault",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 117
+    },
+    {
+      "id": "I018",
+      "name": "Tower Sigil",
+      "category": "currency",
+      "effect": "tower progression currency",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 124
+    },
+    {
+      "id": "I019",
+      "name": "Raid Crest",
+      "category": "currency",
+      "effect": "raid reward currency",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 131
+    },
+    {
+      "id": "I020",
+      "name": "Relic Fragment",
+      "category": "crafting_material",
+      "effect": "assemble relics",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 138
+    },
+    {
+      "id": "I021",
+      "name": "Aelmoor Map Scrap",
+      "category": "quest_item",
+      "effect": "reveal hidden map locations",
+      "stackLimit": 99,
+      "tradeable": false,
+      "vendorValue": 145
+    },
+    {
+      "id": "I022",
+      "name": "Phoenix Feather",
+      "category": "material",
+      "effect": "rare revive crafting component",
+      "stackLimit": 99,
+      "tradeable": true,
+      "vendorValue": 152
+    }
+  ],
+  "notes": {
+    "stats": "Use formulas in data/character_combat_item_system.json; these are base templates, not final level-specific values.",
+    "copyright": "All names and descriptions are original game content."
+  }
+}

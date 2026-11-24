@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 1,
+  "world": "Aelmoor",
+  "levelCap": 720,
+  "runtimeAlignment": {
+    "implemented": [
+      "STR DEX INT VIT END SPI attributes",
+      "ATK MATK DEF MDEF HP SP derived stats",
+      "critical chance and damage",
+      "attack speed dodge block cooldown reduction life steal",
+      "gold find magic find HP and SP regeneration",
+      "timed buffs",
+      "four equipment slots",
+      "nine rarity tiers",
+      "23 affix types",
+      "normal elite and boss monster ranks"
+    ],
+    "extensions": [
+      "additional resource pools",
+      "15 damage types",
+      "expanded armor slots",
+      "monster affix families",
+      "world boss scheduler and contribution ledger",
+      "arc boss multi-encounter progression"
+    ],
+    "warning": "The GBC runtime has legacy 8-bit mirrored stats and a visible level field capped at 99; the progression system defines level 720. Resolve save/UI compatibility before claiming the full level cap is playable."
+  },
+  "attributes": [
+    {
+      "id": "STR",
+      "name": "Strength",
+      "effects": [
+        "physical attack",
+        "critical damage",
+        "carry capacity"
+      ]
+    },
+    {
+      "id": "DEX",
+      "name": "Dexterity",
+      "effects": [
+        "critical chance",
+        "attack speed",
+        "dodge",
+        "accuracy"
+      ]
+    },
+    {
+      "id": "INT",
+      "name": "Intelligence",
+      "effects": [
+        "magic attack",
+        "cooldown reduction",
+        "skill power"
+      ]
+    },
+    {
+      "id": "VIT",
+      "name": "Vitality",
+      "effects": [
+        "maximum HP",
+        "health regeneration",
+        "status resistance"
+      ]
+    },
+    {
+      "id": "END",
+      "name": "Endurance",
+      "effects": [
+        "physical defense",
+        "block chance",
+        "stamina"
+      ]
+    },
+    {
+      "id": "SPI",
+      "name": "Spirit",
+      "effects": [
+        "magic defense",
+        "maximum SP",
+        "resource regeneration"
+      ]
+    }
+  ],
+  "derivedStats": [
+    {
+      "id": "ATK",
+      "formula": "STR*2 + DEX/2 + gear"
+    },
+    {
+      "id": "MATK",
+      "formula": "INT*2 + SPI/2 + gear"
+    },
+    {
+      "id": "DEF",
+      "formula": "END*2 + STR/2 + gear"
+    },
+    {
+      "id": "MDEF",
+      "formula": "SPI*2 + INT/2 + gear"
+    },
+    {
+      "id": "HP",
+      "formula": "30 + VIT*8 + END*2 + level*4 + gear"
+    },
+    {
+      "id": "SP",
+      "formula": "10 + SPI*2 + INT + level + gear"
+    },
+    {
+      "id": "CRIT",
+      "formula": "5 + DEX/40 + gear + buff; cap 75%"
+    },
+    {
+      "id": "CRIT_DMG",
+      "formula": "50 + STR/30 + gear; cap 250% bonus"
+    },
+    {
+      "id": "ASPD",
+      "formula": "DEX/30 + gear + haste; cap 100%"
+    },
+    {
+      "id": "DODGE",
+      "formula": "DEX/60 + gear; cap 40%"
+    },
+    {
+      "id": "BLOCK",
+      "formula": "END/60 + gear; cap 50%"
+    },
+    {
+      "id": "CDR",
+      "formula": "INT/60 + gear; cap 40%"
+    },
+    {
+      "id": "LEECH",
+      "formula": "gear; cap 25%"
+    },
+    {
+      "id": "GOLD_FIND",
+      "formula": "gear; cap 500%"
+    },
+    {
+      "id": "MAGIC_FIND",
+      "formula": "gear; cap 500%"
+    },
+    {
+      "id": "HP_REGEN",
+      "formula": "1 + VIT/25 + gear + regen buff per 2 sec"
+    },
+    {
+      "id": "SP_REGEN",
+      "formula": "1 + SPI/30 per 2 sec"
+    }
+  ],
+  "resourcePools": [
+    "HP",
+    "SP",
+    "STA",
+    "RAGE",
+    "ENERGY",
+    "FOCUS",
+    "FAITH",
+    "AETHER",
+    "HEAT",
+    "SANITY"
+  ],
+  "damageTypes": [
+    "physical",
+    "magical",
+    "earth",
+    "water",
+    "air",
+    "fire",
+    "light",
+    "dark",
+    "poison",
+    "bleed",
+    "frost",
+    "lightning",
+    "arcane",
+    "void",
+    "chaos",
+    "true"
+  ],
+  "resistRule": "finalDamage = rawDamage * (100 - resistancePercent) / 100; ordinary resistance clamp -100% to 80%; true damage bypasses ordinary resistance.",
+  "rarityTiers": [
+    {
+      "rank": 1,
+      "name": "Worn",
+      "affixCount": 0
+    },
+    {
+      "rank": 2,
+      "name": "Sturdy",
+      "affixCount": 0
+    },
+    {
+      "rank": 3,
+      "name": "Fine",
+      "affixCount": 1
+    },
+    {
+      "rank": 4,
+      "name": "Enchanted",
+      "affixCount": 1
+    },
+    {
+      "rank": 5,
+      "name": "Rare",
+      "affixCount": 2
+    },
+    {
+      "rank": 6,
+      "name": "Epic",
+      "affixCount": 2
+    },
+    {
+      "rank": 7,
+      "name": "Legendary",
+      "affixCount": 3
+    },
+    {
+      "rank": 8,
+      "name": "Relic",
+      "affixCount": 3
+    },
+    {
+      "rank": 9,
+      "name": "Mythic",
+      "affixCount": 3
+    }
+  ],
+  "affixes": [
+    "STR",
+    "DEX",
+    "INT",
+    "VIT",
+    "END",
+    "SPI",
+    "ATK",
+    "MATK",
+    "DEF",
+    "MDEF",
+    "HP",
+    "SP",
+    "CRIT",
+    "CRIT_DMG",
+    "ASPD",
+    "DODGE",
+    "BLOCK",
+    "LEECH",
+    "GOLD_FIND",
+    "MAGIC_FIND",
+    "HP_REGEN",
+    "SP_REGEN",
+    "CDR"
+  ],
+  "equipmentSlots": {
+    "active": [
+      "weapon",
+      "armor",
+      "offhand",
+      "trinket"
+    ],
+    "planned": [
+      "head",
+      "chest",
+      "hands",
+      "legs",
+      "feet",
+      "back",
+      "neck",
+      "ring_left",
+      "ring_right",
+      "relic_1",
+      "relic_2"
+    ],
+    "upgradeRange": [
+      0,
+      10
+    ]
+  },
+  "weaponArchetypes": [
+    "sword",
+    "greatsword",
+    "spear",
+    "dual_blades",
+    "staff",
+    "bow",
+    "mace",
+    "wand",
+    "scythe",
+    "axe",
+    "rapier",
+    "hammer"
+  ],
+  "armorTypes": [
+    "light",
+    "medium",
+    "heavy",
+    "robe",
+    "shield",
+    "cloak",
+    "helm",
+    "boots",
+    "gloves",
+    "greaves"
+  ],
+  "itemCategories": [
+    "consumable",
+    "food",
+    "rune",
+    "crafting_material",
+    "key",
+    "currency",
+    "quest_item",
+    "relic",
+    "artifact",
+    "gem"
+  ],
+  "monsterRanks": {
+    "normal": {
+      "hpMultiplier": 1,
+      "attackMultiplier": 1
+    },
+    "elite": {
+      "hpMultiplier": 2,
+      "attackMultiplier": 1.25,
+      "affixCount": 1
+    },
+    "boss": {
+      "hpMultiplier": 3,
+      "attackMultiplier": 1.3,
+      "phases": 2
+    },
+    "worldBoss": {
+      "hpMultiplier": 12,
+      "attackMultiplier": 1.6,
+      "partySize": "12-24",
+      "features": [
+        "persistent regional encounter",
+        "contribution tracking",
+        "telegraphed area mechanics",
+        "server-authoritative rewards"
+      ]
+    },
+    "arcBoss": {
+      "hpMultiplier": 20,
+      "attackMultiplier": 1.8,
+      "partySize": "8-12",
+      "features": [
+        "multi-phase",
+        "realm-wide mechanics",
+        "multi-stage progression",
+        "unique arc rewards"
+      ]
+    }
+  },
+  "creatureTypes": [
+    "aberration",
+    "beast",
+    "celestial",
+    "construct",
+    "dragon",
+    "elemental",
+    "fey",
+    "fiend",
+    "giant",
+    "humanoid",
+    "monstrosity",
+    "ooze",
+    "plant",
+    "undead"
+  ],
+  "combatRoles": [
+    "skirmisher",
+    "brute",
+    "lurker",
+    "controller",
+    "soldier",
+    "artillery",
+    "support",
+    "boss"
+  ],
+  "monsterAffixes": [
+    "Enraged",
+    "Armored",
+    "Spellbound",
+    "Vampiric",
+    "Swift",
+    "Plaguebearer",
+    "Warden",
+    "Voidtouched"
+  ],
+  "progression": "Each level grants 3 attribute points and 1 skill point; class growth adds to the six primary attributes.",
+  "bossRules": [
+    "Boss actions must be telegraphed and counterable.",
+    "Phase changes trigger from server-authoritative HP thresholds.",
+    "World bosses use persistent shared health and contribution records.",
+    "Arc bosses use multi-stage encounter state; rewards are validated server-side."
+  ]
+}
