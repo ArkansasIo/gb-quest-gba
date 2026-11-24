@@ -43,6 +43,73 @@ void monster_init_instance(
   PowerTier tier
 ) BANKED {
   monster->type = type;
+  switch (type) {
+  case MONSTER_KOBOLD:
+    monster->creature_type = DND_HUMANOID;
+    monster->subtype = MONSTER_SUBTYPE_KOBOLD;
+    monster->monster_class = MONSTER_CLASS_SKIRMISHER;
+    break;
+  case MONSTER_GOBLIN:
+    monster->creature_type = DND_HUMANOID;
+    monster->subtype = MONSTER_SUBTYPE_GOBLINOID;
+    monster->monster_class = MONSTER_CLASS_SKIRMISHER;
+    break;
+  case MONSTER_ZOMBIE:
+    monster->creature_type = DND_UNDEAD;
+    monster->subtype = MONSTER_SUBTYPE_ZOMBIE;
+    monster->monster_class = MONSTER_CLASS_BRUTE;
+    break;
+  case MONSTER_BUGBEAR:
+    monster->creature_type = DND_HUMANOID;
+    monster->subtype = MONSTER_SUBTYPE_GOBLINOID;
+    monster->monster_class = MONSTER_CLASS_BRUTE;
+    break;
+  case MONSTER_OWLBEAR:
+    monster->creature_type = DND_MONSTROSITY;
+    monster->subtype = MONSTER_SUBTYPE_OWLBEAR;
+    monster->monster_class = MONSTER_CLASS_BRUTE;
+    break;
+  case MONSTER_GELATINOUS_CUBE:
+    monster->creature_type = DND_OOZE;
+    monster->subtype = MONSTER_SUBTYPE_GELATINOUS;
+    monster->monster_class = MONSTER_CLASS_CONTROLLER;
+    break;
+  case MONSTER_DISPLACER_BEAST:
+    monster->creature_type = DND_MONSTROSITY;
+    monster->subtype = MONSTER_SUBTYPE_DISPLACER_BEAST;
+    monster->monster_class = MONSTER_CLASS_LURKER;
+    break;
+  case MONSTER_WILL_O_WISP:
+    monster->creature_type = DND_UNDEAD;
+    monster->subtype = MONSTER_SUBTYPE_WILL_O_WISP;
+    monster->monster_class = MONSTER_CLASS_CONTROLLER;
+    break;
+  case MONSTER_DEATHKNIGHT:
+    monster->creature_type = DND_UNDEAD;
+    monster->subtype = MONSTER_SUBTYPE_DEATH_KNIGHT;
+    monster->monster_class = MONSTER_CLASS_SOLDIER;
+    break;
+  case MONSTER_MINDFLAYER:
+    monster->creature_type = DND_ABERRATION;
+    monster->subtype = MONSTER_SUBTYPE_MIND_FLAYER;
+    monster->monster_class = MONSTER_CLASS_CONTROLLER;
+    break;
+  case MONSTER_BEHOLDER:
+    monster->creature_type = DND_ABERRATION;
+    monster->subtype = MONSTER_SUBTYPE_BEHOLDER;
+    monster->monster_class = MONSTER_CLASS_ARTILLERY;
+    break;
+  case MONSTER_DRAGON:
+    monster->creature_type = DND_DRAGON;
+    monster->subtype = MONSTER_SUBTYPE_DRAGON;
+    monster->monster_class = MONSTER_CLASS_BOSS;
+    break;
+  default:
+    monster->creature_type = DND_BEAST;
+    monster->subtype = MONSTER_SUBTYPE_NONE;
+    monster->monster_class = MONSTER_CLASS_BRUTE;
+    break;
+  }
   monster->tileset = ts;
   monster->active = true;
   monster->name = name;

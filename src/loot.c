@@ -1,7 +1,7 @@
 #pragma bank 25
 
 /**
- * Loot, equipment, progression and quests for the ARPG systems.
+ * Items, economy, quests and saving for the ARPG systems. See loot.h.
  */
 
 #include <gb/gb.h>
@@ -13,6 +13,8 @@
 #include "item.h"
 #include "map.h"
 #include "player.h"
+#include "progress.h"
+#include "skills.h"
 #include "sound.h"
 #include "stats.h"
 #include "world.h"
@@ -21,16 +23,7 @@ LootItem loot_bag[LOOT_BAG_SIZE];
 LootItem loot_stash[LOOT_STASH_SIZE];
 LootItem loot_equip[LOOT_EQUIP_SLOTS];
 LootItem loot_shop[LOOT_SHOP_SIZE];
-uint16_t loot_gold;
-LootBonuses loot_bonus;
-BuffState buffs;
-
-uint8_t stat_points;
-uint8_t skill_points;
-uint8_t stat_alloc[ALLOC_COUNT];
-uint8_t skill_rank[6];
-uint8_t hotbar[HOTBAR_SLOTS];
-uint8_t hotbar_sel;
+uint32_t loot_gold;
 uint16_t total_kills;
 
 Quest quests[QUEST_MAX];
@@ -38,8 +31,7 @@ Quest quest_offers[QUEST_MAX];
 char quest_notice[64];
 bool quest_notice_pending;
 
-static uint16_t base_max_hp;
-static uint16_t base_max_sp;
+#define GOLD_CAP 99999999UL
 
 //------------------------------------------------------------------------------
 // Item data
@@ -48,82 +40,130 @@ static uint16_t base_max_sp;
 typedef struct LootBase {
   const char *name;
   uint8_t slot;
-  uint8_t implicit;
+  uint8_t implicit;   // scaled stat
   uint8_t scale;
+  uint8_t bonus;      // fixed secondary stat (0 = none)
+  uint8_t bonus_val;
 } LootBase;
 
-#define LOOT_BASE_COUNT 19
+#define LOOT_BASE_COUNT 28
 
 static const LootBase loot_bases[LOOT_BASE_COUNT] = {
-  { "", 0, AFF_NONE, 0 },
-  { "Dagger", LOOT_SLOT_WEAPON, AFF_ATK, 3 },
-  { "Sword", LOOT_SLOT_WEAPON, AFF_ATK, 4 },
-  { "Axe", LOOT_SLOT_WEAPON, AFF_ATK, 5 },
-  { "Mace", LOOT_SLOT_WEAPON, AFF_ATK, 4 },
-  { "Spear", LOOT_SLOT_WEAPON, AFF_ATK, 4 },
-  { "Bow", LOOT_SLOT_WEAPON, AFF_ATK, 4 },
-  { "Staff", LOOT_SLOT_WEAPON, AFF_MATK, 5 },
-  { "Wand", LOOT_SLOT_WEAPON, AFF_MATK, 4 },
-  { "Robe", LOOT_SLOT_ARMOR, AFF_MDEF, 3 },
-  { "Leather", LOOT_SLOT_ARMOR, AFF_DEF, 3 },
-  { "Chainmail", LOOT_SLOT_ARMOR, AFF_DEF, 4 },
-  { "Plate", LOOT_SLOT_ARMOR, AFF_DEF, 5 },
-  { "Buckler", LOOT_SLOT_OFFHAND, AFF_DEF, 2 },
-  { "Kite Shld", LOOT_SLOT_OFFHAND, AFF_DEF, 3 },
-  { "Tome", LOOT_SLOT_OFFHAND, AFF_MATK, 3 },
-  { "Ring", LOOT_SLOT_TRINKET, AFF_AGL, 2 },
-  { "Amulet", LOOT_SLOT_TRINKET, AFF_MDEF, 2 },
-  { "Charm", LOOT_SLOT_TRINKET, AFF_HP, 4 },
+  { "", 0, AFF_NONE, 0, AFF_NONE, 0 },
+  { "Uchigatana", LOOT_SLOT_WEAPON, AFF_ATK, 4, AFF_ASPD, 5 },
+  { "Bloodhound", LOOT_SLOT_WEAPON, AFF_ATK, 5, AFF_CDMG, 15 },
+  { "Moonveil", LOOT_SLOT_WEAPON, AFF_MATK, 5, AFF_CDR, 5 },
+  { "Rivers Blood", LOOT_SLOT_WEAPON, AFF_ATK, 5, AFF_LEECH, 2 },
+  { "Blasphemous", LOOT_SLOT_WEAPON, AFF_ATK, 6, AFF_HP, 10 },
+  { "Dark Moon GS", LOOT_SLOT_WEAPON, AFF_MATK, 6, AFF_CDR, 8 },
+  { "Night+Flame", LOOT_SLOT_WEAPON, AFF_MATK, 6, AFF_CRIT, 5 },
+  { "Malenia Hand", LOOT_SLOT_WEAPON, AFF_ATK, 5, AFF_ASPD, 10 },
+  { "Starscourge", LOOT_SLOT_WEAPON, AFF_ATK, 6, AFF_CDMG, 20 },
+  { "Carian Regal", LOOT_SLOT_WEAPON, AFF_MATK, 5, AFF_SPI, 3 },
+  { "Sacred Relic", LOOT_SLOT_WEAPON, AFF_ATK, 6, AFF_GOLD, 5 },
+  { "Raging Wolf", LOOT_SLOT_ARMOR, AFF_DEF, 4, AFF_DODGE, 3 },
+  { "Blaidd Armor", LOOT_SLOT_ARMOR, AFF_DEF, 5, AFF_ATK, 2 },
+  { "Malenia Armor", LOOT_SLOT_ARMOR, AFF_DEF, 4, AFF_ASPD, 5 },
+  { "Radahn Armor", LOOT_SLOT_ARMOR, AFF_DEF, 6, AFF_HP, 10 },
+  { "Cleanrot Set", LOOT_SLOT_ARMOR, AFF_DEF, 5, AFF_MDEF, 3 },
+  { "Black Knife", LOOT_SLOT_ARMOR, AFF_DEF, 3, AFF_DODGE, 6 },
+  { "Brass Shield", LOOT_SLOT_OFFHAND, AFF_DEF, 4, AFF_BLOCK, 15 },
+  { "Carian Shield", LOOT_SLOT_OFFHAND, AFF_MDEF, 4, AFF_BLOCK, 12 },
+  { "Erdtree Staff", LOOT_SLOT_OFFHAND, AFF_MATK, 5, AFF_SPI, 4 },
+  { "Godslayer", LOOT_SLOT_OFFHAND, AFF_MATK, 5, AFF_CRIT, 4 },
+  { "Golden Order", LOOT_SLOT_OFFHAND, AFF_MATK, 4, AFF_CDR, 6 },
+  { "Great Rune", LOOT_SLOT_TRINKET, AFF_STR, 0, AFF_HP, 8 },
+  { "Radagon Seal", LOOT_SLOT_TRINKET, AFF_ATK, 0, AFF_CDMG, 8 },
+  { "Erdtree Favor", LOOT_SLOT_TRINKET, AFF_HP, 4, AFF_REGEN, 2 },
+  { "Dragoncrest", LOOT_SLOT_TRINKET, AFF_DEF, 3, AFF_MDEF, 3 },
+  { "Crimson Amber", LOOT_SLOT_TRINKET, AFF_HP, 5, AFF_VIT, 2 },
 };
 
 static const char *const rarity_names[RARITY_COUNT] = {
-  "Common", "Magic", "Rare", "Epic", "Legend"
+  "Worn", "Sturdy", "Fine", "Enchanted", "Rare", "Epic", "Legend",
+  "Relic", "Mythic"
 };
 
 static const char *const affix_codes[AFF_COUNT] = {
-  "", "ATK", "DEF", "MAT", "MDF", "AGL", "HP", "SP", "CRT", "LCH", "GLD", "RGN"
+  "", "ATK", "MAT", "DEF", "MDF", "HP", "SP", "STR", "DEX", "INT", "VIT",
+  "END", "SPI", "CRT", "CDM", "SPD", "DGE", "BLK", "LCH", "GLD", "MF", "RGN",
+  "CDR"
 };
 
-static const uint8_t rarity_mult[RARITY_COUNT] = { 8, 9, 10, 12, 14 };
+static const uint8_t rarity_mult[RARITY_COUNT] = {
+  7, 8, 9, 10, 12, 14, 17, 20, 24
+};
+static const uint8_t rarity_affixes[RARITY_COUNT] = {
+  0, 0, 1, 1, 2, 2, 3, 3, 3
+};
+static const uint8_t forge_chance[6] = { 80, 65, 50, 35, 25, 0 };
 
 //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
-static uint8_t clamp8(uint16_t v) {
-  return v > 255 ? 255 : (uint8_t)v;
+static uint16_t cap16(uint32_t v) {
+  return v > 60000 ? 60000 : (uint16_t)v;
 }
 
 static void clear_item(LootItem *it) {
   memset(it, 0, sizeof(LootItem));
 }
 
-static uint8_t implicit_value(const LootItem *it) {
+static bool valid(const LootItem *it) {
+  return it->base && it->base < LOOT_BASE_COUNT && it->rarity < RARITY_COUNT;
+}
+
+static uint16_t implicit_value(const LootItem *it) {
   const LootBase *b = &loot_bases[it->base];
-  uint16_t v = b->scale + ((uint16_t)it->ilvl * b->scale) / 6;
-  v = (v * rarity_mult[it->rarity]) / 8;
-  return clamp8(v);
+  uint32_t v;
+  if (b->implicit >= AFF_STR && b->implicit <= AFF_SPI)
+    v = 2 + it->ilvl / 3;
+  else
+    v = ((uint32_t)b->scale * (4 + (uint32_t)it->ilvl * 2)) / 4;
+  v = v * rarity_mult[it->rarity] / 8;
+  v = v * (100 + 10 * it->upgrade) / 100;
+  return cap16(v);
 }
 
-static uint8_t roll_affix_value(uint8_t affix, uint8_t ilvl, uint8_t rarity) {
+static uint16_t roll_affix_value(uint8_t affix, uint16_t ilvl, uint8_t rarity) {
+  const uint32_t l = ilvl;
+  uint32_t v;
   switch (affix) {
-  case AFF_HP: return clamp8(4 + ilvl / 2 + rarity * 3 + d4());
-  case AFF_SP: return clamp8(2 + ilvl / 4 + rarity + d4());
-  case AFF_CRIT: return 2 + rarity * 2 + (d4() & 1);
-  case AFF_LEECH: return 1 + rarity;
-  case AFF_GOLD: return 5 + rarity * 5 + d4();
-  case AFF_REGEN: return 1 + ilvl / 20 + (rarity >> 1);
-  default: return clamp8(1 + ilvl / 5 + rarity + (d4() & 1));
+  case AFF_ATK: case AFF_MATK: case AFF_DEF: case AFF_MDEF:
+    v = 2 + l / 2 + rarity * l / 10; break;
+  case AFF_HP: v = 5 + l * 2 + rarity * l / 4; break;
+  case AFF_SP: v = 3 + l / 2 + rarity * l / 20; break;
+  case AFF_STR: case AFF_DEX: case AFF_INT:
+  case AFF_VIT: case AFF_END: case AFF_SPI:
+    v = 1 + l / 6 + rarity * l / 40; break;
+  case AFF_CRIT: v = 2 + rarity * 2 + (d4() & 1); break;
+  case AFF_CDMG: v = 10 + rarity * 10; break;
+  case AFF_ASPD: v = 3 + rarity * 3; break;
+  case AFF_DODGE: v = 2 + rarity * 2; break;
+  case AFF_BLOCK: v = 3 + rarity * 3; break;
+  case AFF_LEECH: v = 1 + rarity; break;
+  case AFF_GOLD: case AFF_MF: v = 10 + rarity * 10; break;
+  case AFF_REGEN: v = 1 + l / 15 + rarity * 2; break;
+  default: v = 2 + rarity * 2; break;  // CDR
   }
+  v += v * (d4()) / 8;  // small spread
+  if (rarity >= RARITY_RELIC)
+    v = v * (rarity == RARITY_RELIC ? 3 : 4) / 2;
+  return cap16(v);
 }
 
-static uint8_t roll_rarity(uint8_t boost) {
+static uint8_t roll_rarity(uint16_t boost) {
   uint16_t r = (uint16_t)d256() + boost;
-  if (r < 150) return RARITY_COMMON;
-  if (r < 215) return RARITY_MAGIC;
+  if (r < 105) return RARITY_WORN;
+  if (r < 165) return RARITY_STURDY;
+  if (r < 205) return RARITY_FINE;
+  if (r < 230) return RARITY_ENCHANTED;
   if (r < 245) return RARITY_RARE;
-  if (r < 262) return RARITY_EPIC;
-  return RARITY_LEGENDARY;
+  if (r < 252) return RARITY_EPIC;
+  if (r < 255) return RARITY_LEGENDARY;
+  if (r < 258) return RARITY_RELIC;
+  return RARITY_MYTHIC;
 }
 
 //------------------------------------------------------------------------------
@@ -135,27 +175,16 @@ void loot_new_game(void) BANKED {
   memset(loot_stash, 0, sizeof(loot_stash));
   memset(loot_equip, 0, sizeof(loot_equip));
   memset(loot_shop, 0, sizeof(loot_shop));
-  memset(stat_alloc, 0, sizeof(stat_alloc));
-  memset(skill_rank, 0, sizeof(skill_rank));
   memset(quests, 0, sizeof(quests));
   memset(quest_offers, 0, sizeof(quest_offers));
-  memset(&buffs, 0, sizeof(buffs));
-  loot_gold = 25;
-  stat_points = 0;
-  skill_points = 1;
-  skill_rank[0] = 1;
-  hotbar[0] = 0;
-  hotbar[1] = HOTBAR_POTION;
-  hotbar[2] = HOTBAR_ETHER;
-  hotbar[3] = HOTBAR_EMPTY;
-  hotbar_sel = 0;
+  loot_gold = 50;
   total_kills = 0;
   quest_notice_pending = false;
 
   // Starter gear.
-  loot_equip[LOOT_SLOT_WEAPON].base = is_magic_class() ? 8 : 2;
+  loot_equip[LOOT_SLOT_WEAPON].base = is_magic_class() ? 10 : 1;
   loot_equip[LOOT_SLOT_WEAPON].ilvl = 1;
-  loot_equip[LOOT_SLOT_ARMOR].base = is_magic_class() ? 9 : 10;
+  loot_equip[LOOT_SLOT_ARMOR].base = 12;
   loot_equip[LOOT_SLOT_ARMOR].ilvl = 1;
 
   add_items(ITEM_POTION, 3);
@@ -163,78 +192,57 @@ void loot_new_game(void) BANKED {
 }
 
 void loot_capture_base(void) BANKED {
-  base_max_hp = player.max_hp;
-  base_max_sp = player.max_sp;
-  loot_recalc();
+  progress_recalc();
 }
 
-void loot_recalc(void) BANKED {
-  uint16_t g[AFF_COUNT];
-  memset(g, 0, sizeof(g));
-
+void loot_gear_totals(uint16_t *t) BANKED {
+  memset(t, 0, sizeof(uint16_t) * AFF_COUNT);
   for (uint8_t s = 0; s < LOOT_EQUIP_SLOTS; s++) {
     const LootItem *it = loot_equip + s;
-    if (it->base == 0 || it->base >= LOOT_BASE_COUNT)
+    if (!valid(it))
       continue;
-    g[loot_bases[it->base].implicit] += implicit_value(it);
-    for (uint8_t a = 0; a < 2; a++)
+    const LootBase *b = &loot_bases[it->base];
+    t[b->implicit] = cap16((uint32_t)t[b->implicit] + implicit_value(it));
+    if (b->bonus && b->bonus_val)
+      t[b->bonus] = cap16((uint32_t)t[b->bonus] + b->bonus_val);
+    for (uint8_t a = 0; a < 3; a++)
       if (it->aff[a] && it->aff[a] < AFF_COUNT)
-        g[it->aff[a]] += it->val[a];
+        t[it->aff[a]] = cap16((uint32_t)t[it->aff[a]] + it->val[a]);
   }
-
-  uint16_t atk = player.atk_base + g[AFF_ATK] + stat_alloc[ALLOC_STR];
-  uint16_t def = player.def_base + g[AFF_DEF] + stat_alloc[ALLOC_END];
-  if (buffs.atk) atk += atk / 4 + 2;
-  if (buffs.def) def += def / 4 + 2;
-
-  player.atk = clamp8(atk);
-  player.def = clamp8(def);
-  player.matk = clamp8(player.matk_base + g[AFF_MATK] + stat_alloc[ALLOC_INT] +
-    (buffs.atk ? player.matk_base / 4 + 2 : 0));
-  player.mdef = clamp8(player.mdef_base + g[AFF_MDEF] + stat_alloc[ALLOC_SPI]);
-  player.agl = clamp8(player.agl_base + g[AFF_AGL] + stat_alloc[ALLOC_DEX]);
-
-  if (base_max_hp) {
-    player.max_hp = base_max_hp + g[AFF_HP] + 6 * stat_alloc[ALLOC_VIT];
-    player.max_sp = base_max_sp + g[AFF_SP] + 2 * stat_alloc[ALLOC_SPI];
-  }
-  if (player.hp > player.max_hp) player.hp = player.max_hp;
-  if (player.sp > player.max_sp) player.sp = player.max_sp;
-
-  loot_bonus.crit = clamp8(g[AFF_CRIT] + player.agl / 16);
-  if (loot_bonus.crit > 60) loot_bonus.crit = 60;
-  loot_bonus.leech = clamp8(g[AFF_LEECH]);
-  loot_bonus.gold_find = clamp8(g[AFF_GOLD]);
-  loot_bonus.regen = clamp8(g[AFF_REGEN]);
-}
-
-void loot_on_level_up(uint8_t levels) BANKED {
-  stat_points += 3 * levels;
-  skill_points += levels;
 }
 
 //------------------------------------------------------------------------------
 // Items
 //------------------------------------------------------------------------------
 
-void loot_generate(uint8_t level, uint8_t boost, LootItem *out) BANKED {
+static void fill_item(uint16_t level, uint8_t rarity, LootItem *out) {
   clear_item(out);
   out->base = 1 + rand() % (LOOT_BASE_COUNT - 1);
-  out->ilvl = level == 0 ? 1 : level;
-  out->rarity = roll_rarity(boost);
+  out->ilvl = level == 0 ? 1 : (level > MAX_LEVEL ? MAX_LEVEL : level);
+  out->rarity = rarity;
 
-  uint8_t n = out->rarity == RARITY_COMMON ? 0 :
-    (out->rarity == RARITY_MAGIC ? 1 : 2);
+  const uint8_t n = rarity_affixes[rarity];
   for (uint8_t a = 0; a < n; a++) {
     uint8_t affix;
+    bool dup;
     do {
       affix = 1 + rand() % (AFF_COUNT - 1);
-    } while (a == 1 && affix == out->aff[0]);
+      dup = false;
+      for (uint8_t b = 0; b < a; b++)
+        if (out->aff[b] == affix) dup = true;
+    } while (dup);
     out->aff[a] = affix;
-    out->val[a] = roll_affix_value(affix, out->ilvl, out->rarity);
-    if (out->rarity == RARITY_LEGENDARY)
-      out->val[a] = clamp8((uint16_t)out->val[a] * 3 / 2);
+    out->val[a] = roll_affix_value(affix, out->ilvl, rarity);
   }
+}
+
+void loot_generate(uint16_t level, uint8_t boost, LootItem *out) BANKED {
+  uint16_t b = boost + hs.magic_find / 5;
+  fill_item(level, roll_rarity(b), out);
+}
+
+void loot_generate_rarity(uint16_t level, uint8_t rarity, LootItem *out) BANKED {
+  fill_item(level, rarity < RARITY_COUNT ? rarity : RARITY_MYTHIC, out);
 }
 
 bool loot_add_to_bag(const LootItem *it) BANKED {
@@ -248,26 +256,57 @@ bool loot_add_to_bag(const LootItem *it) BANKED {
 }
 
 void loot_item_name(const LootItem *it, char *buf) BANKED {
-  if (it->base == 0 || it->base >= LOOT_BASE_COUNT) {
+  if (!valid(it)) {
     buf[0] = 0;
     return;
   }
-  strcpy(buf, loot_bases[it->base].name);
+  if (it->upgrade)
+    sprintf(buf, "%s+%u", loot_bases[it->base].name, it->upgrade);
+  else
+    strcpy(buf, loot_bases[it->base].name);
 }
 
-void loot_item_stats(const LootItem *it, char *buf) BANKED {
+void loot_item_fullname(const LootItem *it, char *buf) BANKED {
+  char name[16];
+  if (!valid(it)) {
+    buf[0] = 0;
+    return;
+  }
+  loot_item_name(it, name);
+  sprintf(buf, "R%u %s %s", it->rarity + 1,
+    rarity_names[it->rarity], name);
+}
+
+static char *stat_piece(char *p, uint8_t affix, uint16_t value) {
+  if (!affix || affix >= AFF_COUNT || !value)
+    return p;
+  sprintf(p, p[0] ? " %s%u" : "%s%u", affix_codes[affix], value);
+  return p;
+}
+
+void loot_item_stats(const LootItem *it, uint8_t line, char *buf) BANKED {
   buf[0] = 0;
-  if (it->base == 0 || it->base >= LOOT_BASE_COUNT)
+  if (!valid(it))
     return;
   const LootBase *b = &loot_bases[it->base];
   char *p = buf;
-  sprintf(p, "%s%u", affix_codes[b->implicit], implicit_value(it));
-  p += strlen(p);
-  for (uint8_t a = 0; a < 2; a++) {
-    if (!it->aff[a] || it->aff[a] >= AFF_COUNT)
-      continue;
-    sprintf(p, " %s%u", affix_codes[it->aff[a]], it->val[a]);
+  if (line == 0) {
+    stat_piece(p, b->implicit, implicit_value(it));
     p += strlen(p);
+    p[0] = 0;
+    if (b->bonus && b->bonus_val) {
+      sprintf(p, buf[0] ? " %s%u" : "%s%u", affix_codes[b->bonus], b->bonus_val);
+      p += strlen(p);
+    }
+    if (it->aff[0])
+      sprintf(p, buf[0] ? " %s%u" : "%s%u", affix_codes[it->aff[0]], it->val[0]);
+  } else {
+    if (it->aff[1]) {
+      sprintf(p, "%s%u", affix_codes[it->aff[1]], it->val[1]);
+      p += strlen(p);
+    }
+    if (it->aff[2])
+      sprintf(p, buf[0] ? " %s%u" : "%s%u", affix_codes[it->aff[2]], it->val[2]);
   }
 }
 
@@ -276,10 +315,11 @@ uint8_t loot_item_slot(const LootItem *it) BANKED {
 }
 
 uint16_t loot_item_value(const LootItem *it) BANKED {
-  if (it->base == 0)
+  if (!valid(it))
     return 0;
-  return 4 + it->ilvl + (uint16_t)it->ilvl * it->rarity * 2 +
-    (uint16_t)it->rarity * it->rarity * 10;
+  const uint32_t l = it->ilvl;
+  const uint32_t r = it->rarity;
+  return cap16(5 + l * 2 + l * r * 3 + r * r * 20 + (uint32_t)it->upgrade * l);
 }
 
 void loot_equip_from_bag(uint8_t idx) BANKED {
@@ -289,7 +329,7 @@ void loot_equip_from_bag(uint8_t idx) BANKED {
   LootItem tmp = loot_equip[slot];
   loot_equip[slot] = loot_bag[idx];
   loot_bag[idx] = tmp;
-  loot_recalc();
+  progress_recalc();
 }
 
 void loot_unequip(uint8_t slot) BANKED {
@@ -297,14 +337,22 @@ void loot_unequip(uint8_t slot) BANKED {
     return;
   if (loot_add_to_bag(loot_equip + slot))
     clear_item(loot_equip + slot);
-  loot_recalc();
+  progress_recalc();
+}
+
+static void gain_gold(uint32_t g) {
+  loot_gold = loot_gold + g > GOLD_CAP ? GOLD_CAP : loot_gold + g;
+}
+
+void loot_add_gold(uint32_t g) BANKED {
+  g += (g * hs.gold_find) / 100;
+  gain_gold(g);
 }
 
 void loot_sell(uint8_t idx) BANKED {
   if (idx >= LOOT_BAG_SIZE || loot_bag[idx].base == 0)
     return;
-  uint16_t v = loot_item_value(loot_bag + idx);
-  loot_gold = loot_gold + v > 60000 ? 60000 : loot_gold + v;
+  gain_gold(loot_item_value(loot_bag + idx));
   clear_item(loot_bag + idx);
 }
 
@@ -328,26 +376,28 @@ void loot_stash_move(uint8_t idx, bool to_stash) BANKED {
 }
 
 //------------------------------------------------------------------------------
-// Shop
+// Shop and forge
 //------------------------------------------------------------------------------
 
-void loot_restock_shop(uint8_t level) BANKED {
+void loot_restock_shop(uint16_t level) BANKED {
   for (uint8_t k = 0; k < LOOT_SHOP_SIZE; k++)
     loot_generate(level, 30, loot_shop + k);
 }
 
-uint16_t loot_price(uint8_t idx, uint8_t level) BANKED {
+uint16_t loot_price(uint8_t idx, uint16_t level) BANKED {
+  const uint32_t l = level;
   switch (idx) {
   case 0: case 1: case 2: case 3:
-    return loot_shop[idx].base ? loot_item_value(loot_shop + idx) * 3 : 0;
-  case 4: return 10 + level;          // Potion
-  case 5: return 15 + level;          // Ether
-  case 6: return 60 + 4 * level;      // Elixir
-  default: return 8;                  // Remedy
+    return loot_shop[idx].base ?
+      cap16((uint32_t)loot_item_value(loot_shop + idx) * 3) : 0;
+  case 4: return cap16(10 + l * 2);   // Potion
+  case 5: return cap16(15 + l * 2);   // Ether
+  case 6: return cap16(60 + l * 8);   // Elixir
+  default: return cap16(8 + l / 4);   // Remedy
   }
 }
 
-bool loot_buy(uint8_t idx, uint8_t level) BANKED {
+bool loot_buy(uint8_t idx, uint16_t level) BANKED {
   const uint16_t price = loot_price(idx, level);
   if (price == 0 || loot_gold < price)
     return false;
@@ -359,8 +409,7 @@ bool loot_buy(uint8_t idx, uint8_t level) BANKED {
     static const uint8_t ids[4] = {
       ITEM_POTION, ITEM_ETHER, ITEM_ELIXIR, ITEM_REMEDY
     };
-    Item *item = inventory + ids[idx - 4];
-    if (item->quantity >= 99)
+    if (inventory[ids[idx - 4]].quantity >= 99)
       return false;
     add_items(ids[idx - 4], 1);
   }
@@ -368,58 +417,81 @@ bool loot_buy(uint8_t idx, uint8_t level) BANKED {
   return true;
 }
 
+uint32_t loot_forge_cost(uint8_t slot) BANKED {
+  const LootItem *it = loot_equip + slot;
+  if (slot >= LOOT_EQUIP_SLOTS || !valid(it) || it->upgrade >= LOOT_MAX_UPGRADE)
+    return 0;
+  return (uint32_t)loot_item_value(it) * (it->upgrade + 1);
+}
+
+uint8_t loot_forge_chance(uint8_t slot) BANKED {
+  const LootItem *it = loot_equip + slot;
+  if (slot >= LOOT_EQUIP_SLOTS || !valid(it) || it->upgrade >= LOOT_MAX_UPGRADE)
+    return 0;
+  return it->upgrade < 5 ? 100 : forge_chance[it->upgrade - 5];
+}
+
+uint8_t loot_forge(uint8_t slot) BANKED {
+  const uint32_t cost = loot_forge_cost(slot);
+  if (!cost || loot_gold < cost)
+    return 0;
+  loot_gold -= cost;
+  if (d128() >= (uint16_t)loot_forge_chance(slot) * 128 / 100)
+    return 2;
+  loot_equip[slot].upgrade++;
+  progress_recalc();
+  return 1;
+}
+
 //------------------------------------------------------------------------------
 // Rewards
 //------------------------------------------------------------------------------
 
-static void add_gold(uint16_t g) {
-  g += (g * loot_bonus.gold_find) / 100;
-  loot_gold = loot_gold + g > 60000 ? 60000 : loot_gold + g;
-}
-
 static char *append_item(char *p, const LootItem *it, bool kept) {
-  sprintf(p, kept ? "\n%s %s" : "\n%s %s (full)",
-    rarity_names[it->rarity], loot_bases[it->base].name);
+  char name[24];
+  loot_item_fullname(it, name);
+  sprintf(p, kept ? "\n%s" : "\n%s (full)", name);
   return p + strlen(p);
 }
 
-void loot_open_chest(uint8_t level, char *msg) BANKED {
+void loot_open_chest(uint16_t level, char *msg) BANKED {
   LootItem it;
-  uint16_t g = (uint16_t)level * 5 + d16() + 5;
-  add_gold(g);
+  char num[12];
+  uint32_t g = (uint32_t)level * 5 + d16() + 5;
+  g += (g * hs.gold_find) / 100;
+  gain_gold(g);
   loot_generate(level, 25, &it);
   bool kept = loot_add_to_bag(&it);
-  sprintf(msg, "Treasure!\n+%u gold", g);
+  u32_str(g, num);
+  sprintf(msg, "Treasure!\n+%s gold", num);
   append_item(msg + strlen(msg), &it, kept);
   play_sound(sfx_level_up);
 }
 
-uint8_t loot_roll_kill(uint8_t level, uint8_t boss, char *msg) BANKED {
+uint8_t loot_roll_kill(uint16_t level, uint8_t rank, char *msg) BANKED {
   char *p = msg + strlen(msg);
   uint8_t drops = 0;
 
-  uint16_t g = (uint16_t)level * 2 + d8() + 1;
-  if (boss == 1) g *= 3;
-  if (boss == 2) g *= 8;
-  add_gold(g);
+  uint32_t g = (uint32_t)level * 2 + d8() + 1;
+  if (rank == 1) g *= 3;
+  if (rank == 2) g *= 8;
+  loot_add_gold(g);
 
-  uint8_t chance = boss ? 255 : 70;
-  uint8_t rolls = boss == 2 ? 2 : 1;
+  uint16_t chance = rank ? 255 : 70 + hs.magic_find / 10;
+  uint8_t rolls = rank == 2 ? 2 : 1;
   for (uint8_t k = 0; k < rolls; k++) {
     if (d256() > chance)
       continue;
     LootItem it;
-    loot_generate(level, boss == 2 ? 60 : (boss ? 35 : 0), &it);
+    loot_generate(level, rank == 2 ? 60 : (rank ? 35 : 0), &it);
     bool kept = loot_add_to_bag(&it);
     if (drops < 2)
       p = append_item(p, &it, kept);
     drops++;
   }
 
-  // Occasional potion drop.
-  if ((d16()) == 0) {
+  if (d16() == 0)
     add_items(ITEM_POTION, 1);
-  }
   return drops;
 }
 
@@ -428,16 +500,16 @@ bool loot_use_consumable(uint8_t entry) BANKED {
     if (inventory[ITEM_POTION].quantity == 0 || player.hp >= player.max_hp)
       return false;
     remove_item(ITEM_POTION);
-    uint16_t heal = player.max_hp / 3 + 10;
-    player.hp = player.hp + heal > player.max_hp ? player.max_hp : player.hp + heal;
+    uint32_t hp = (uint32_t)player.hp + player.max_hp / 3 + 10;
+    player.hp = hp > player.max_hp ? player.max_hp : (uint16_t)hp;
     return true;
   }
   if (entry == HOTBAR_ETHER) {
     if (inventory[ITEM_ETHER].quantity == 0 || player.sp >= player.max_sp)
       return false;
     remove_item(ITEM_ETHER);
-    uint16_t heal = player.max_sp / 3 + 5;
-    player.sp = player.sp + heal > player.max_sp ? player.max_sp : player.sp + heal;
+    uint32_t sp = (uint32_t)player.sp + player.max_sp / 3 + 5;
+    player.sp = sp > player.max_sp ? player.max_sp : (uint16_t)sp;
     return true;
   }
   return false;
@@ -449,11 +521,12 @@ bool loot_use_consumable(uint8_t entry) BANKED {
 
 #define SAVE_ADDR ((uint8_t *)0xA000)
 #define SAVE_DATA ((uint8_t *)0xA008)
-#define SAVE_VERSION 1
+#define SAVE_VERSION 2
 
 static uint8_t *save_ptr;
 static uint8_t save_sum;
 static bool save_write;
+static bool save_load;
 
 /**
  * Streams one block to (or from) the save area, updating the checksum.
@@ -463,45 +536,42 @@ static void stream(void *data, uint16_t n) {
   while (n--) {
     if (save_write)
       *save_ptr = *d;
-    else if (data)
+    else if (save_load)
       *d = *save_ptr;
     save_sum += *save_ptr++;
     d++;
   }
 }
 
-/**
- * Streams every piece of saved state. With `save_write` false and `load`
- * false it only computes the checksum.
- */
-static void stream_all(bool load) {
+static void stream_all(void) {
   save_ptr = SAVE_DATA;
   save_sum = 0;
-  stream(load || save_write ? &player : NULL, sizeof(Player));
+  stream(&player, sizeof(Player));
   for (uint8_t k = 0; k < INVENTORY_LEN; k++)
-    stream(load || save_write ? &inventory[k].quantity : NULL, 1);
-  stream(load || save_write ? loot_bag : NULL, sizeof(loot_bag));
-  stream(load || save_write ? loot_stash : NULL, sizeof(loot_stash));
-  stream(load || save_write ? loot_equip : NULL, sizeof(loot_equip));
-  stream(load || save_write ? &loot_gold : NULL, sizeof(loot_gold));
-  stream(load || save_write ? &stat_points : NULL, 1);
-  stream(load || save_write ? &skill_points : NULL, 1);
-  stream(load || save_write ? stat_alloc : NULL, sizeof(stat_alloc));
-  stream(load || save_write ? skill_rank : NULL, sizeof(skill_rank));
-  stream(load || save_write ? hotbar : NULL, sizeof(hotbar));
-  stream(load || save_write ? &total_kills : NULL, sizeof(total_kills));
-  stream(load || save_write ? quests : NULL, sizeof(quests));
-  stream(load || save_write ? &base_max_hp : NULL, sizeof(base_max_hp));
-  stream(load || save_write ? &base_max_sp : NULL, sizeof(base_max_sp));
-  stream(load || save_write ? &world_last_town : NULL, 1);
-  stream(load || save_write ? &world_best_tower_floor : NULL, 1);
-  stream(load || save_write ? world_visited : NULL, sizeof(world_visited));
+    stream(&inventory[k].quantity, 1);
+  stream(loot_bag, sizeof(loot_bag));
+  stream(loot_stash, sizeof(loot_stash));
+  stream(loot_equip, sizeof(loot_equip));
+  stream(&loot_gold, sizeof(loot_gold));
+  stream(&total_kills, sizeof(total_kills));
+  stream(quests, sizeof(quests));
+  stream(&world_last_town, 1);
+  stream(&world_best_tower_floor, 1);
+  stream(world_visited, sizeof(world_visited));
+  stream(&hero_level, sizeof(hero_level));
+  stream(&hero_xp, sizeof(hero_xp));
+  stream(attr_alloc, sizeof(attr_alloc));
+  stream(&stat_points, sizeof(stat_points));
+  stream(&skill_points, sizeof(skill_points));
+  stream(skill_rank, sizeof(skill_rank));
+  stream(hotbar, sizeof(hotbar));
 }
 
 void save_game(void) BANKED {
   SWITCH_RAM(1);
   save_write = true;
-  stream_all(false);
+  save_load = false;
+  stream_all();
   save_write = false;
   SAVE_ADDR[0] = 'L';
   SAVE_ADDR[1] = 'D';
@@ -515,7 +585,8 @@ static bool valid_save(void) {
     SAVE_ADDR[2] != SAVE_VERSION)
     return false;
   save_write = false;
-  stream_all(false);
+  save_load = false;
+  stream_all();
   return save_sum == SAVE_ADDR[3];
 }
 
@@ -537,12 +608,13 @@ bool load_game(void) BANKED {
   SWITCH_RAM(0);
   init_player(player_class);
   SWITCH_RAM(1);
-  save_write = false;
-  stream_all(true);
+  save_load = true;
+  stream_all();
+  save_load = false;
   SWITCH_RAM(0);
-  memset(&buffs, 0, sizeof(buffs));
+  buff_clear();
   hotbar_sel = 0;
-  loot_recalc();
+  progress_recalc();
   return true;
 }
 
@@ -550,28 +622,23 @@ bool load_game(void) BANKED {
 // Quests
 //------------------------------------------------------------------------------
 
-static uint16_t capped_mul(uint16_t a, uint16_t b) {
-  uint32_t v = (uint32_t)a * b;
-  return v > 60000 ? 60000 : (uint16_t)v;
-}
-
 static void make_offer(Quest *q) {
-  const uint8_t lvl = player.level;
-  const uint16_t mxp = calc_monster_exp(lvl, B_TIER);
+  const uint16_t lvl = hero_level;
+  const uint32_t mxp = monster_xp(lvl, B_TIER, 0);
   memset(q, 0, sizeof(Quest));
-  switch (rand() % 5) {
+  switch (rand() % 6) {
   case 0:
   case 1:
     q->type = QUEST_KILL;
     q->goal = 8 + (rand() & 7);
-    q->gold = capped_mul(lvl, q->goal * 2);
-    q->xp = capped_mul(mxp, q->goal / 2 + 1);
+    q->gold = (uint32_t)lvl * q->goal * 2 + 20;
+    q->xp = mxp * (q->goal / 2 + 1);
     break;
   case 2:
     q->type = QUEST_ELITE;
     q->goal = 2 + (rand() & 1);
-    q->gold = capped_mul(lvl, 20 * q->goal);
-    q->xp = capped_mul(mxp, 3 * q->goal);
+    q->gold = (uint32_t)lvl * 20 * q->goal + 50;
+    q->xp = mxp * 3 * q->goal;
     break;
   case 3: {
     // Explore an unvisited zone (falls back to a tower quest).
@@ -583,12 +650,19 @@ static void make_offer(Quest *q) {
       q->type = QUEST_ZONE;
       q->target = z;
       q->goal = 1;
-      q->gold = capped_mul(lvl, 25);
-      q->xp = capped_mul(mxp, 4);
+      q->gold = (uint32_t)lvl * 25 + 50;
+      q->xp = mxp * 4;
       return;
     }
   }
-    // fall through
+    // fall through when every zone has already been visited
+  case 4:
+    q->type = QUEST_RAID;
+    q->target = rand() % WORLD_RAID_COUNT;
+    q->goal = 1;
+    q->gold = (uint32_t)(q->target + 1) * 500 + (uint32_t)lvl * 10;
+    q->xp = mxp * (q->target + 3);
+    break;
   default:
     if (rand() & 1) {
       q->type = QUEST_TOWER;
@@ -596,13 +670,13 @@ static void make_offer(Quest *q) {
       if (q->target > WORLD_TOWER_MAX_FLOOR)
         q->target = WORLD_TOWER_MAX_FLOOR;
       q->goal = 1;
-      q->gold = capped_mul(q->target, 30);
-      q->xp = capped_mul(mxp, 5);
+      q->gold = (uint32_t)q->target * 40 + 100;
+      q->xp = mxp * 5;
     } else {
       q->type = QUEST_BOSS;
       q->goal = 1;
-      q->gold = capped_mul(lvl, 50);
-      q->xp = capped_mul(mxp, 8);
+      q->gold = (uint32_t)lvl * 50 + 100;
+      q->xp = mxp * 8;
     }
   }
 }
@@ -648,33 +722,42 @@ void quest_describe(const Quest *q, char *buf) BANKED {
   case QUEST_BOSS:
     sprintf(buf, "Slay a boss");
     break;
+  case QUEST_RAID:
+    sprintf(buf, "Clear raid %u", q->target + 1);
+    break;
   default:
     sprintf(buf, "-");
   }
 }
 
 void quest_reward_text(const Quest *q, char *buf) BANKED {
-  if (q->type == QUEST_NONE)
+  char g[12];
+  char x[12];
+  if (q->type == QUEST_NONE) {
     buf[0] = 0;
-  else
-    sprintf(buf, " %uG %uXP", q->gold, q->xp);
+    return;
+  }
+  u32_str(q->gold, g);
+  u32_str(q->xp, x);
+  sprintf(buf, " %sG %sXP", g, x);
 }
 
 static void complete_quest(Quest *q) {
   char desc[20];
-  const uint8_t before = player.level;
+  char g[12];
+  char x[12];
   quest_describe(q, desc);
-  add_gold(q->gold);
-  if (level_up(q->xp))
-    loot_on_level_up(player.level - before);
-  loot_recalc();
-  sprintf(quest_notice, "Quest complete!\n%s\n+%uG +%uXP", desc, q->gold, q->xp);
+  gain_gold(q->gold);
+  progress_add_xp(q->xp);
+  u32_str(q->gold, g);
+  u32_str(q->xp, x);
+  sprintf(quest_notice, "Quest complete!\n%s\n+%sG +%sXP", desc, g, x);
   quest_notice_pending = true;
   q->type = QUEST_NONE;
 }
 
 void quest_event(uint8_t event, uint8_t value) BANKED {
-  if (event == QUEST_EVENT_KILL)
+  if (event == QUEST_EVENT_KILL && total_kills < 65000)
     total_kills++;
 
   for (uint8_t k = 0; k < QUEST_MAX; k++) {
@@ -695,6 +778,9 @@ void quest_event(uint8_t event, uint8_t value) BANKED {
       break;
     case QUEST_TOWER:
       hit = event == QUEST_EVENT_TOWER && value >= q->target;
+      break;
+    case QUEST_RAID:
+      hit = event == QUEST_EVENT_RAID && value == q->target;
       break;
     }
     if (!hit)

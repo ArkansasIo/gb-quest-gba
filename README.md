@@ -44,14 +44,22 @@ a new character.
 * **Towns.** A shop sells random gear and potions, and a quest board offers
   bounties: slay monsters, slay elites, explore a zone, climb the tower, or slay
   a boss. Quests pay gold and XP.
-* **Open world.** A 9x8 grid of zones across nine regions, each with its own
-  look and monsters. Each region has a town at its center, and monsters get
-  stronger the farther you travel from the start. There is a 100-floor tower,
-  and the original labyrinth is entered from the zone north of the starting
-  town.
+* **Open world.** A connected 9x8 grid of 72 named zones across nine biomes,
+  with nine capital cities and nine smaller settlements. Zone names are
+  available through the world-area lookup and appear on settlement signs;
+  layouts are generated deterministically from each zone's ID. Monster
+  strength rises with distance from Ashford. The
+  100-floor tower and original eight-floor labyrinth have marked world gates.
 * **Saving.** The game saves automatically to the cartridge's battery-backed
   save memory whenever you enter a town. If you are defeated, you lose 10% of
   your gold and wake up in the last town you visited.
+
+See [the 72-zone world atlas](docs/WORLD_ATLAS_72_ZONES.md) for the region map,
+settlements, underground frontier, and dungeon gateways. See [world tiers, raids,
+trails, and monster taxonomy](docs/WORLD_TIERS_RAIDS_TRAILS_MONSTERS.md) for
+level bands, instance routes, tower scaling, and D&D-style creature tags.
+See [the online world server guide](docs/ONLINE_WORLD_SERVER.md) for the
+authoritative realm, character, zone, chat, party, and guild backend.
 
 ## How to Build the ROM
 
@@ -72,4 +80,3 @@ To build the ROM run the following commands:
 * `npm install`
 * `make assets`
 * `make`
-

@@ -1,0 +1,10 @@
+{
+  "name": "labyrinth-dragon-world-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

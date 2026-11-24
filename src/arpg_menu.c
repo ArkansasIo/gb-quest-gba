@@ -16,7 +16,9 @@
 #include "loot.h"
 #include "map.h"
 #include "player.h"
+#include "progress.h"
 #include "settings.h"
+#include "skills.h"
 #include "sound.h"
 #include "world.h"
 
@@ -50,10 +52,9 @@ static uint8_t shop_zone = 0xFF;
  * Text palettes: glyphs use color 3 on background color 1.
  */
 static const palette_color_t menu_palettes[6 * 4] = {
-  // Header: white on dark blue
-  RGB_WHITE, RGB8(3, 37, 135), RGB8(60, 80, 160), RGB_WHITE,
-  // Common
-  RGB_WHITE, RGB8(101, 128, 186), RGB8(3, 37, 135), RGB8(22, 6, 4),
+  // Pokémon-style blue menu panels with a light text field and dark heading.
+  RGB_WHITE, RGB8(20, 48, 112), RGB8(65, 112, 176), RGB_WHITE,
+  RGB_WHITE, RGB8(202, 218, 234), RGB8(20, 48, 112), RGB8(22, 6, 4),
   // Magic
   RGB_WHITE, RGB8(101, 128, 186), RGB8(3, 37, 135), RGB8(0, 40, 200),
   // Rare
@@ -70,11 +71,19 @@ static const palette_color_t cursor_palette[4] = {
 
 static const char *const slot_tags[LOOT_EQUIP_SLOTS] = { "W", "A", "O", "T" };
 static const char *const rarity_names[RARITY_COUNT] = {
-  "Common", "Magic", "Rare", "Epic", "Legend"
+  "Worn", "Sturdy", "Fine", "Enchanted", "Rare", "Epic", "Legend",
+  "Relic", "Mythic"
 };
-static const char *const alloc_names[ALLOC_COUNT] = {
+static const char *const alloc_names[ATTR_COUNT] = {
   "STR +ATK", "DEX +AGL", "INT +MAT", "VIT +HP ", "END +DEF", "SPI +MDF"
 };
+
+static uint8_t rarity_palette(uint8_t rarity) {
+  static const uint8_t palettes[RARITY_COUNT] = {
+    2, 2, 2, 3, 3, 4, 4, 5, 5
+  };
+  return palettes[rarity < RARITY_COUNT ? rarity : 0];
+}
 
 //------------------------------------------------------------------------------
 // Drawing helpers
@@ -130,7 +139,7 @@ static void item_line(uint8_t y, const char *prefix, const LootItem *it) {
   strcpy(buf, prefix);
   strcat(buf, name);
   sprintf(col(buf, strlen(prefix) + 10), " L%u", it->ilvl);
-  line(y, buf, PAL_RARITY + it->rarity);
+  line(y, buf, rarity_palette(it->rarity));
 }
 
 static void item_detail(uint8_t y, const LootItem *it) {
@@ -141,10 +150,16 @@ static void item_detail(uint8_t y, const LootItem *it) {
     return;
   }
   loot_item_name(it, name);
-  sprintf(buf, "%s %s", rarity_names[it->rarity], name);
-  line(y, buf, PAL_RARITY + it->rarity);
-  loot_item_stats(it, buf);
+  sprintf(buf, "R%u %s %s", it->rarity + 1, rarity_names[it->rarity], name);
+  line(y, buf, rarity_palette(it->rarity));
+  loot_item_stats(it, 0, buf);
   line(y + 1, buf, PAL_TEXT);
+}
+
+static void menu_title(const char *name, uint8_t page) {
+  char buf[24];
+  sprintf(buf, "[%s] %u/5", name, page + 1);
+  line(0, buf, PAL_HEAD);
 }
 
 //------------------------------------------------------------------------------
@@ -155,14 +170,15 @@ static const uint8_t entry_col[3] = { 2, 8, 14 };
 
 void arpg_menu_draw_entries(void) BANKED {
   static const char *const names[ARPG_MENU_COUNT] = {
-    "SKILL", "ITEMS", "QUEST", "TOWN", "STATS", "EXIT"
+    "SKILLS", "BAG", "QUEST", "TOWN", "STATUS", "BACK"
   };
   uint8_t *vram = VRAM_WINDOW_XY(1, 29);
   for (uint8_t k = 0; k < 18; k++)
     set_vram_byte(vram + k, FONT_SPACE);
   for (uint8_t k = 0; k < ARPG_MENU_COUNT; k++)
     core.draw_text(VRAM_WINDOW_XY(entry_col[k % 3], k < 3 ? 28 : 30),
-      names[k], 5);
+      names[k], 6);
+  core.draw_text(VRAM_WINDOW_XY(1, 31), "A:OPEN      B:CLOSE", 19);
   core.load_sprite_palette(cursor_palette, 7, 1);
   set_sprite_tile(CURSOR_SPRITE, '>' + FONT_OFFSET);
   set_sprite_prop(CURSOR_SPRITE, 0x0F);
@@ -184,7 +200,7 @@ void arpg_menu_draw_cursor(uint8_t entry) BANKED {
 // Items screen
 //------------------------------------------------------------------------------
 
-#define ITEMS_BAG_ROWS 8
+#define ITEMS_BAG_ROWS 7
 
 static uint8_t bag_count(void) {
   uint8_t n = 0;
@@ -195,16 +211,17 @@ static uint8_t bag_count(void) {
 
 static void draw_items(void) {
   char buf[24];
-  sprintf(buf, "ITEMS     Gold:%u", loot_gold);
-  line(0, buf, PAL_HEAD);
+  menu_title("BAG", 1);
+  sprintf(buf, "Gold:%u  EQUIPPED", loot_gold);
+  line(1, buf, PAL_TEXT);
   for (uint8_t s = 0; s < LOOT_EQUIP_SLOTS; s++) {
     sprintf(buf, " %s:", slot_tags[s]);
-    item_line(1 + s, buf, loot_equip + s);
+    item_line(2 + s, buf, loot_equip + s);
   }
   sprintf(buf, "BAG %u/%u", bag_count(), LOOT_BAG_SIZE);
-  line(5, buf, PAL_HEAD);
+  line(6, buf, PAL_HEAD);
   for (uint8_t r = 0; r < ITEMS_BAG_ROWS; r++)
-    item_line(6 + r, "  ", loot_bag + scroll + r);
+    item_line(7 + r, "  ", loot_bag + scroll + r);
 
   const LootItem *sel = cursor < LOOT_EQUIP_SLOTS ? loot_equip + cursor :
     loot_bag + (cursor - LOOT_EQUIP_SLOTS);
@@ -213,12 +230,12 @@ static void draw_items(void) {
     inventory[ITEM_POTION].quantity, inventory[ITEM_ETHER].quantity,
     inventory[ITEM_ELIXIR].quantity, inventory[ITEM_REMEDY].quantity);
   line(16, buf, PAL_TEXT);
-  line(17, "A:Equip SEL:Sell", PAL_HEAD);
+  line(17, "A:Equip SEL:Sell B", PAL_HEAD);
 
   if (cursor < LOOT_EQUIP_SLOTS)
-    put_cursor(1 + cursor);
+    put_cursor(2 + cursor);
   else
-    put_cursor(6 + (cursor - LOOT_EQUIP_SLOTS) - scroll);
+    put_cursor(7 + (cursor - LOOT_EQUIP_SLOTS) - scroll);
 }
 
 static void update_items(void) {
@@ -271,8 +288,7 @@ static void hotbar_short(uint8_t entry, char *out) {
 static void draw_skills(void) {
   char buf[24];
   char name[16];
-  sprintf(buf, "SKILLS   Points:%u", skill_points);
-  line(0, buf, PAL_HEAD);
+  menu_title("SKILLS", 0);
   for (uint8_t k = 0; k < SKILL_COUNT; k++) {
     arpg_skill_name(k, name);
     const uint8_t req = arpg_skill_level(k);
@@ -305,7 +321,7 @@ static void draw_skills(void) {
     strcpy(p, shortn);
   }
   line(16, buf, PAL_TEXT);
-  line(17, "A:Learn SEL:Assign", PAL_HEAD);
+  line(17, "A:Learn SEL:Set B", PAL_HEAD);
 
   put_cursor(cursor < SKILL_COUNT ? 1 + 2 * cursor : 13 + (cursor - SKILL_COUNT));
 }
@@ -367,7 +383,7 @@ static void quest_rows(uint8_t y, const Quest *q) {
 static void draw_quests(void) {
   char buf[24];
   const bool town = world_in_town();
-  line(0, "QUEST LOG", PAL_HEAD);
+  menu_title("QUESTS", 2);
   for (uint8_t k = 0; k < QUEST_MAX; k++)
     quest_rows(1 + 2 * k, quests + k);
   line(7, town ? "QUEST BOARD" : "Visit a town for", PAL_HEAD);
@@ -381,7 +397,7 @@ static void draw_quests(void) {
   sprintf(buf, "Kills:%u Tower:F%u", total_kills, world_best_tower_floor);
   line(14, buf, PAL_TEXT);
   clear_rows(15, 16);
-  line(17, "A:Accept SEL:Drop", PAL_HEAD);
+  line(17, "A:Take SEL:Drop B", PAL_HEAD);
   put_cursor(cursor < QUEST_MAX ? 1 + 2 * cursor : 8 + 2 * (cursor - QUEST_MAX));
 }
 
@@ -419,8 +435,9 @@ static void draw_shop(void) {
   char buf[24];
   char name[14];
   const uint8_t lvl = world_area_level();
-  sprintf(buf, "SHOP >stash G:%u", loot_gold);
-  line(0, buf, PAL_HEAD);
+  menu_title("SHOP < > STASH", 3);
+  sprintf(buf, "Gold:%u", loot_gold);
+  line(1, buf, PAL_TEXT);
   for (uint8_t k = 0; k < LOOT_SHOP_SIZE; k++) {
     const LootItem *it = loot_shop + k;
     if (!it->base) {
@@ -430,7 +447,7 @@ static void draw_shop(void) {
     loot_item_name(it, name);
     sprintf(buf, "  %s", name);
     sprintf(col(buf, 13), "%uG", loot_price(k, lvl));
-    line(2 + k, buf, PAL_RARITY + it->rarity);
+    line(2 + k, buf, rarity_palette(it->rarity));
   }
   static const char *const consumables[4] = {
     "Potion", "Ether", "Elixir", "Remedy"
@@ -446,7 +463,7 @@ static void draw_shop(void) {
   else
     clear_rows(12, 13);
   clear_rows(14, 16);
-  line(17, "A:Buy <>:Stash", PAL_HEAD);
+  line(17, "A:Buy <>:Tab B", PAL_HEAD);
   put_cursor(cursor < LOOT_SHOP_SIZE ? 2 + cursor : 3 + cursor);
 }
 
@@ -454,14 +471,15 @@ static void draw_stash(void) {
   char buf[24];
   const bool bag = tab == 1;
   const LootItem *list = bag ? loot_bag : loot_stash;
-  sprintf(buf, "STASH >shop %s", bag ? "BAG" : "VAULT");
-  line(0, buf, PAL_HEAD);
+  menu_title("STASH < > SHOP", 3);
+  sprintf(buf, "%s PAGE %u", bag ? "BAG" : "VAULT", scroll / STASH_ROWS + 1);
+  line(1, buf, PAL_TEXT);
   for (uint8_t r = 0; r < STASH_ROWS; r++)
-    item_line(1 + r, "  ", list + scroll + r);
+    item_line(2 + r, "  ", list + scroll + r);
   item_detail(14, list + cursor);
   line(16, bag ? "A:Store in stash" : "A:Take to bag", PAL_TEXT);
-  line(17, "SEL:Bag/Stash <>", PAL_HEAD);
-  put_cursor(1 + cursor - scroll);
+  line(17, "A:Move SEL:List B", PAL_HEAD);
+  put_cursor(2 + cursor - scroll);
 }
 
 static void draw_town(void) {
@@ -524,57 +542,57 @@ static void draw_stats(void) {
   char nm[12];
   get_race_name(player.race, nm, sizeof(nm));
   get_class_name(player.player_class, cls, sizeof(cls));
+  menu_title("STATUS", 4);
   sprintf(buf, "%s %s L%u", nm, cls, player.level);
-  line(0, buf, PAL_HEAD);
-  sprintf(buf, "XP %u/%u", player.exp, player.next_level_exp);
   line(1, buf, PAL_TEXT);
+  sprintf(buf, "XP %u/%u", player.exp, player.next_level_exp);
+  line(2, buf, PAL_TEXT);
   sprintf(buf, "HP %u/%u %cP %u/%u", player.hp, player.max_hp,
     is_magic_class() ? 'M' : 'S', player.sp, player.max_sp);
-  line(2, buf, PAL_TEXT);
+  line(3, buf, PAL_TEXT);
   sprintf(buf, "ATK %u", player.atk);
   sprintf(col(buf, 9), "DEF %u", player.def);
-  line(3, buf, PAL_TEXT);
+  line(4, buf, PAL_TEXT);
   sprintf(buf, "MAT %u", player.matk);
   sprintf(col(buf, 9), "MDF %u", player.mdef);
-  line(4, buf, PAL_TEXT);
-  sprintf(buf, "AGL %u", player.agl);
-  sprintf(col(buf, 9), "CRIT %u", loot_bonus.crit);
   line(5, buf, PAL_TEXT);
-  sprintf(buf, "LEECH %u GOLD+%u", loot_bonus.leech, loot_bonus.gold_find);
+  sprintf(buf, "AGL %u", player.agl);
+  sprintf(col(buf, 9), "CRIT %u", hs.crit);
   line(6, buf, PAL_TEXT);
-  sprintf(buf, "Gold %u Kills %u", loot_gold, total_kills);
+  sprintf(buf, "LEECH %u GOLD+%u", hs.leech, hs.gold_find);
   line(7, buf, PAL_TEXT);
+  sprintf(buf, "Gold %u Kills %u", loot_gold, total_kills);
+  line(8, buf, PAL_TEXT);
   sprintf(buf, "STAT POINTS: %u", stat_points);
-  line(8, buf, PAL_HEAD);
-  for (uint8_t k = 0; k < ALLOC_COUNT; k++) {
-    sprintf(buf, "  %s %u", alloc_names[k], stat_alloc[k]);
-    line(9 + k, buf, PAL_TEXT);
+  line(9, buf, PAL_HEAD);
+  for (uint8_t k = 0; k < ATTR_COUNT; k++) {
+    sprintf(buf, "  %s %u", alloc_names[k], attr_alloc[k]);
+    line(10 + k, buf, PAL_TEXT);
   }
-  line(15, "SETTINGS", PAL_HEAD);
-  sprintf(buf, "  SFX:%s MUSIC:%s", settings_sfx_enabled ? "ON " : "OFF",
+  sprintf(buf, "SET SFX:%s MUSIC:%s", settings_sfx_enabled ? "ON " : "OFF",
     settings_music_enabled ? "ON " : "OFF");
-  line(16, buf, PAL_TEXT);
-  line(17, "A:Raise/Toggle", PAL_HEAD);
-  put_cursor(cursor < ALLOC_COUNT ? 9 + cursor : 16);
+  line(16, buf, PAL_HEAD);
+  line(17, "A:Raise/Toggle B", PAL_HEAD);
+  put_cursor(cursor < ATTR_COUNT ? 10 + cursor : 16);
 }
 
 static void update_stats(void) {
   bool redraw = true;
   if (was_pressed(J_UP) && cursor > 0) {
     cursor--;
-  } else if (was_pressed(J_DOWN) && cursor < ALLOC_COUNT + 1) {
+  } else if (was_pressed(J_DOWN) && cursor < ATTR_COUNT + 1) {
     cursor++;
   } else if (was_pressed(J_A)) {
-    if (cursor < ALLOC_COUNT) {
-      if (stat_points && stat_alloc[cursor] < 250) {
-        stat_alloc[cursor]++;
+    if (cursor < ATTR_COUNT) {
+      if (stat_points && attr_alloc[cursor] < 250) {
+        attr_alloc[cursor]++;
         stat_points--;
-        loot_recalc();
+        progress_recalc();
         play_sound(sfx_mid_powerup);
       } else {
         play_sound(sfx_error);
       }
-    } else if (cursor == ALLOC_COUNT) {
+    } else if (cursor == ATTR_COUNT) {
       settings_sfx_enabled = !settings_sfx_enabled;
       play_sound(sfx_menu_move);
     } else {
@@ -584,13 +602,13 @@ static void update_stats(void) {
   } else {
     redraw = false;
   }
-  if (cursor > ALLOC_COUNT) {
+  if (cursor > ATTR_COUNT) {
     // Second settings entry shares the row: move cursor to the right.
     move_sprite(CURSOR_SPRITE, 8 + 9 * 8, 16 + 16 * 8);
   }
   if (redraw)
     draw_stats();
-  if (cursor > ALLOC_COUNT)
+  if (cursor > ATTR_COUNT)
     move_sprite(CURSOR_SPRITE, 8 + 9 * 8, 16 + 16 * 8);
 }
 

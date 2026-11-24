@@ -21,8 +21,10 @@
 #include "loot.h"
 #include "map.h"
 #include "player.h"
+#include "progress.h"
 
 TowerState tower_state;
+RaidState raid_state;
 uint8_t world_last_town = WORLD_START_ZONE;
 uint8_t world_best_tower_floor;
 uint8_t world_visited[9];
@@ -33,6 +35,7 @@ uint8_t world_visited[9];
 
 static FloorBank world_fb;
 static FloorBank tower_fb;
+static FloorBank raid_fb;
 static Floor gen_floor;
 static Map gen_maps[2];
 static Exit gen_exits[8];
@@ -45,7 +48,7 @@ static WorldLocation location = WORLD_LOC_ZONE;
 static bool direct_entry;
 static uint8_t gen_w;
 static uint8_t gen_h;
-static uint8_t area_level = 1;
+static uint16_t area_level = 1;
 static uint8_t area_biome;
 static bool area_town;
 
@@ -60,6 +63,7 @@ static bool chest_opened;
  * Whether the boss of the current tower floor has been defeated.
  */
 static bool floor_boss_pending;
+static bool raid_boss_pending;
 
 // Empty object lists (read while this bank is mapped by the floor loader).
 static const Chest no_chests[] = { { END } };
@@ -80,6 +84,7 @@ static const NPC no_npcs[] = { { END } };
 #define T_STAIRS_DOWN 0x24
 #define T_STAIRS_UP 0x17
 #define T_TOWER 0x22
+#define T_TRAIL 0x22
 
 #define A_WALL 0
 #define A_GROUND 1
@@ -93,14 +98,95 @@ static const uint8_t biome_obstacle[WORLD_BIOME_COUNT] = {
   0x07, 0x30, 0x30, 0x2C, 0x30, 0x08, 0x07, 0x2D, 0x08
 };
 
-static const char *const biome_names[WORLD_BIOME_COUNT] = {
-  "Forest", "Plains", "Desert", "Swamp", "Foothills",
-  "Coast", "Snowfield", "Volcano", "Deeps"
+/*
+ * World atlas names, in row-major order. Keeping names in ROM gives every
+ * generated zone a stable identity without storing 72 separate maps.
+ */
+static const char *const zone_names[WORLD_ZONE_COUNT] = {
+  // Row 0, zones 0-8
+  "Mosswood", "Old King's Road", "Thornwatch", "Brightmeadow", "Windrun",
+  "Sunfield", "Red Dunes", "Glasswind", "Suncleft",
+  // Row 1, zones 9-17
+  "Greenhollow", "Ashford", "Foxglove Vale", "Millcross", "Brightvale",
+  "The Long Acre", "Mirage Run", "Sandmere", "Copper Flats",
+  // Row 2, zones 18-26
+  "Whisperfen", "Mossgate", "Reedmaze", "Kingsroad March", "Highgrass",
+  "Barleycross", "Saltmarsh", "Reedhaven", "Blackwater Reach",
+  // Row 3, zones 27-35
+  "Gloamwood", "Briarwatch", "Hollowmere", "Old Stoneway", "Dragonwatch",
+  "Eagle's Rest", "Grayridge", "Ironroot", "High Crags",
+  // Row 4, zones 36-44
+  "Cloudpass", "Mirefen", "Stormbreak Coast", "Old Salt Road", "Stonehelm",
+  "Tideglass", "Shipwreck Strand", "Gullport", "Bluewater Bay",
+  // Row 5, zones 45-53
+  "Far Shoals", "Pinefall", "Frostmarch", "Whitecap Pass", "Icevein",
+  "Northlight", "Saltwind", "Seawatch", "Beacon Isle",
+  // Row 6, zones 54-62
+  "Stormbreak Reach", "Pinefall", "Northlight Pass", "Emberfall",
+  "Charstone", "Redglass Crater", "Rootdeep", "Sporelight", "Echoing Vault",
+  // Row 7, zones 63-71
+  "Frostmarch Gate", "Frosthold", "Whitecap Pass", "Cinderkeep Road",
+  "Cinderkeep", "Wyrmstone", "The Deep Roads", "Underhall", "Abyssal Rift"
 };
 
-static const char *const town_names[WORLD_BIOME_COUNT] = {
+/* Nine regional capitals plus nine smaller settlements. */
+static const uint8_t settlement_zones[18] = {
+  10, 13, 16, 37, 40, 43, 64, 67, 70,
+  19, 23, 25, 28, 32, 52, 55, 58, 61
+};
+
+typedef struct WorldTrail {
+  uint8_t from;
+  uint8_t to;
+  const char *name;
+} WorldTrail;
+
+static const WorldTrail world_trails[WORLD_TRAIL_COUNT] = {
+  { 1, 19, "King's Road Trail" },
+  { 3, 22, "Sunfield Track" },
+  { 5, 41, "Saltwind Way" },
+  { 7, 48, "Glasswind Pass" },
+  { 8, 53, "Beacon Path" },
+  { 9, 27, "Mirefen Causeway" },
+  { 11, 35, "Eagle Ridge Trail" },
+  { 12, 39, "Old Salt Road" },
+  { 14, 42, "Wreckers' Run" },
+  { 15, 44, "Bluewater Track" },
+  { 17, 26, "Copper Road" },
+  { 18, 36, "Cloudpass Trail" },
+  { 20, 45, "Frostmarch Way" },
+  { 21, 33, "Grayridge Pass" },
+  { 24, 50, "Northlight Path" },
+  { 56, 69, "Deep Roads Spur" },
+};
+
+static const uint8_t raid_zones[WORLD_RAID_COUNT] = {
+  10, 13, 16, 37, 40, 43, 64, 67, 70
+};
+
+static const char *const raid_names[WORLD_RAID_COUNT] = {
+  "Root-Crown Raid", "Sunfield Citadel", "Glass Dune Vault",
+  "Witchwater Depths", "Dragonwatch Bastion", "Tideglass Maw",
+  "Frostmarch Hold", "Cinderkeep Caldera", "Abyssal Court"
+};
+
+static const uint8_t raid_bosses[WORLD_RAID_COUNT] = {
+  MONSTER_OWLBEAR, MONSTER_GOBLIN, MONSTER_KOBOLD,
+  MONSTER_WILL_O_WISP, MONSTER_DRAGON, MONSTER_DISPLACER_BEAST,
+  MONSTER_DEATHKNIGHT, MONSTER_DRAGON, MONSTER_BEHOLDER
+};
+
+static const char *const raid_boss_titles[WORLD_RAID_COUNT] = {
+  "Owlbear Matriarch", "Goblin War-Chief", "Kobold Sun-Seer",
+  "Wisp Queen", "Ancient Dragon", "Displacer Stalker",
+  "Death Knight Marshal", "Ashen Dragon", "Beholder Oracle"
+};
+
+static const char *const settlement_names[18] = {
   "Ashford", "Brightvale", "Sandmere", "Mirefen", "Stonehelm",
-  "Gullport", "Frosthold", "Cinderkeep", "Underhall"
+  "Gullport", "Frosthold", "Cinderkeep", "Underhall", "Mossgate",
+  "Barleycross", "Reedhaven", "Briarwatch", "Eagle's Rest", "Seawatch",
+  "Pinefall", "Charstone", "Sporelight"
 };
 
 /**
@@ -119,8 +205,21 @@ static const uint8_t biome_monsters[WORLD_BIOME_COUNT][3] = {
 };
 
 static const uint8_t tower_bosses[] = {
-  MONSTER_OWLBEAR, MONSTER_DISPLACER_BEAST, MONSTER_DEATHKNIGHT,
-  MONSTER_MINDFLAYER, MONSTER_BEHOLDER, MONSTER_DRAGON,
+  MONSTER_DEATHKNIGHT, MONSTER_BUGBEAR, MONSTER_MINDFLAYER,
+  MONSTER_DRAGON, MONSTER_DRAGON, MONSTER_DEATHKNIGHT,
+  MONSTER_DISPLACER_BEAST, MONSTER_DEATHKNIGHT, MONSTER_BEHOLDER,
+};
+
+static const char *const tower_boss_titles[] = {
+  "R1 Margit, Fell Omen",
+  "R2 Godrick Grafted",
+  "R3 Rennala, Full Moon",
+  "R4 Starscourge Radahn",
+  "R5 Rykard, Blasphemy",
+  "R6 Morgott, Omen King",
+  "R7 Malenia, Blade of Miquella",
+  "R8 Maliketh, Black Blade",
+  "R9 Radagon / Elden Beast",
 };
 
 /**
@@ -292,16 +391,44 @@ static uint8_t zone_biome(uint8_t z) {
 }
 
 static bool zone_is_town(uint8_t z) {
-  return zone_col(z) % 3 == 1 && zone_row(z) % 3 == 1;
+  for (uint8_t i = 0; i < 18; i++)
+    if (settlement_zones[i] == z)
+      return true;
+  return false;
 }
 
-static uint8_t zone_level(uint8_t z) {
-  const uint8_t sc = zone_col(WORLD_START_ZONE);
-  const uint8_t sr = zone_row(WORLD_START_ZONE);
+static const char *zone_settlement_name(uint8_t z) {
+  for (uint8_t i = 0; i < 18; i++)
+    if (settlement_zones[i] == z)
+      return settlement_names[i];
+  return "Settlement";
+}
+
+static uint16_t zone_level(uint8_t z) {
   const uint8_t c = zone_col(z);
   const uint8_t r = zone_row(z);
-  const uint8_t dist = (c > sc ? c - sc : sc - c) + (r > sr ? r - sr : sr - r);
-  return 3 + dist * 3;
+  const uint8_t tier = zone_biome(z) + 1;
+  const uint8_t dx = c % 3 > 1 ? c % 3 - 1 : 1 - c % 3;
+  const uint8_t dy = r % 3 > 1 ? r % 3 - 1 : 1 - r % 3;
+  const uint8_t local = dx + dy;
+  return (tier - 1) * WORLD_LEVELS_PER_TIER + 1 + local * 39;
+}
+
+static uint8_t raid_id_for_zone(uint8_t zone_id) {
+  for (uint8_t i = 0; i < WORLD_RAID_COUNT; i++)
+    if (raid_zones[i] == zone_id)
+      return i;
+  return 0xFF;
+}
+
+static uint8_t trail_destination(uint8_t zone_id) {
+  for (uint8_t i = 0; i < WORLD_TRAIL_COUNT; i++) {
+    if (world_trails[i].from == zone_id)
+      return world_trails[i].to;
+    if (world_trails[i].to == zone_id)
+      return world_trails[i].from;
+  }
+  return 0xFF;
 }
 
 static void generate_zone(uint8_t z) {
@@ -347,7 +474,7 @@ static void generate_zone(uint8_t z) {
     gen_signs[0].message = sign_text;
     gen_signs[1].map_id = END;
     sprintf(sign_text, "Welcome to\n%s!\fPress START for\nthe SHOP, STASH\nand QUESTS.",
-      town_names[biome]);
+      zone_settlement_name(z));
   } else {
     // Scatter obstacles, keeping the center cross clear.
     for (uint8_t y = 2; y < h - 2; y++) {
@@ -390,6 +517,40 @@ static void generate_zone(uint8_t z) {
   if (z == WORLD_DUNGEON_ZONE) {
     put(mx, 2, T_DOORWAY, A_EXIT, 0);
     add_exit(mx, 2, 12, 16, HERE, EXIT_STAIRS, (FloorBank *)&bank_floor1);
+  }
+
+  const uint8_t raid_id = raid_id_for_zone(z);
+  if (raid_id != 0xFF) {
+    put(mx, my - 3, T_TOWER, A_EXIT, 0);
+    add_exit(mx, my - 3, 2, 1, DOWN, EXIT_STAIRS, &raid_fb);
+  }
+
+  const uint8_t trail_to = trail_destination(z);
+  if (trail_to != 0xFF) {
+    // Carve a visible path from the center to the trailhead.
+    for (uint8_t x = mx; x <= mx + 2; x++)
+      put(x, my + 2, T_FLOOR, A_GROUND, 0);
+    for (uint8_t y = my; y <= my + 2; y++)
+      put(mx, y, T_FLOOR, A_GROUND, 0);
+    put(mx + 2, my + 2, T_TRAIL, A_EXIT, 0);
+    add_exit(mx + 2, my + 2, WORLD_MAP_W / 2, WORLD_MAP_H / 2,
+      HERE, EXIT_DOOR, &world_fb);
+
+    if (!town && gen_signs[0].map_id == END) {
+      for (uint8_t i = 0; i < WORLD_TRAIL_COUNT; i++) {
+        if (world_trails[i].from == z || world_trails[i].to == z) {
+          sprintf(sign_text, "%s\nShortcut to\n%s.", world_trails[i].name,
+            zone_names[trail_to]);
+          gen_signs[0].map_id = 0;
+          gen_signs[0].col = mx - 1;
+          gen_signs[0].row = my + 2;
+          gen_signs[0].facing = UP;
+          gen_signs[0].message = sign_text;
+          gen_signs[1].map_id = END;
+          break;
+        }
+      }
+    }
   }
 
   area_biome = biome;
@@ -459,9 +620,8 @@ static void generate_tower_floor(uint8_t n) {
 
   area_biome = WORLD_BIOME_UNDERGROUND;
   area_town = false;
-  area_level = 4 + n;
-  if (area_level > 99)
-    area_level = 99;
+  area_level = 1 + ((uint32_t)(n - 1) * (MAX_LEVEL - 1)) /
+    (WORLD_TOWER_MAX_FLOOR - 1);
   location = WORLD_LOC_TOWER;
   floor_boss_pending = (n % 5) == 0;
 
@@ -471,19 +631,70 @@ static void generate_tower_floor(uint8_t n) {
   config_random_encounter(5, 4, 4, false);
 }
 
+static void generate_raid_floor(uint8_t n) {
+  const uint8_t w = TOWER_W;
+  const uint8_t h = TOWER_H;
+  const uint8_t biome = zone_biome(raid_state.entrance_zone_id);
+  reset_floor(w, h, 0xB0 + raid_state.raid_id * WORLD_RAID_FLOORS + n,
+    biome);
+  seed = 0x4D21 + raid_state.raid_id * 0x0317 + n * 0x0193;
+  if (seed == 0) seed = 1;
+
+  for (uint8_t y = 0; y < h; y++) {
+    for (uint8_t x = 0; x < w; x++) {
+      if (x == 0 || y == 0 || x == w - 1 || y == h - 1)
+        put(x, y, biome_wall[biome], A_WALL, 0);
+      else if (x % 4 == 0 && y % 4 == 0)
+        put(x, y, biome_obstacle[biome], A_WALL, 0);
+      else if (x > 3 && y > 3 && x < w - 4 && y < h - 4 && (rnd() & 0x0F) < 2)
+        put(x, y, biome_obstacle[biome], A_WALL, 0);
+      else
+        put(x, y, floor_tile(), A_GROUND, 0);
+    }
+  }
+
+  put(2, 1, T_STAIRS_UP, A_EXIT, 0);
+  put(2, 2, T_FLOOR, A_GROUND, 0);
+  if (n == 1) {
+    add_exit(2, 1, WORLD_MAP_W / 2, WORLD_MAP_H / 2 - 3,
+      UP, EXIT_STAIRS, &world_fb);
+  } else {
+    add_exit(2, 1, w - 3, h - 2, UP, EXIT_STAIRS, &raid_fb);
+  }
+
+  if (n < WORLD_RAID_FLOORS) {
+    put(w - 3, h - 2, T_STAIRS_DOWN, A_EXIT, 0);
+    put(w - 3, h - 3, T_FLOOR, A_GROUND, 0);
+    add_exit(w - 3, h - 2, 2, 1, DOWN, EXIT_STAIRS, &raid_fb);
+  }
+
+  gen_floor.default_x = 2;
+  gen_floor.default_y = 2;
+  if ((rnd() & 1) == 0)
+    place_chest();
+
+  area_biome = biome;
+  area_town = false;
+  area_level = zone_level(raid_state.entrance_zone_id) + (n - 1) * 12;
+  location = WORLD_LOC_RAID;
+  raid_boss_pending = n == WORLD_RAID_FLOORS;
+  config_random_encounter(5, 4, 4, false);
+}
+
 //------------------------------------------------------------------------------
 // Encounters
 //------------------------------------------------------------------------------
 
 static EncounterTable gen_table[2];
 
-static PowerTier tier_for_level(uint8_t level) {
-  if (level >= 30) return A_TIER;
-  if (level >= 14) return B_TIER;
+static PowerTier tier_for_level(uint16_t level) {
+  if (level >= 200) return A_TIER;
+  if (level >= 60) return B_TIER;
   return C_TIER;
 }
 
-static uint8_t vary_level(uint8_t base) {
+static uint8_t vary_level(uint16_t base) {
+  if (base > 99) base = 99;  // legacy monster generators use levels 1-99
   int8_t l = (int8_t)base + (int8_t)(d4()) - 1;
   if (l < 1) l = 1;
   if (l > 99) l = 99;
@@ -492,13 +703,13 @@ static uint8_t vary_level(uint8_t base) {
 
 static void build_random_encounter(void) {
   const uint8_t *mons = biome_monsters[area_biome];
-  const uint8_t lvl = area_level;
+  const uint16_t lvl = area_level;
   EncounterTable *t = gen_table;
 
   // Stronger monster types show up as the area level rises.
-  uint8_t max_kind = lvl < 8 ? 1 : (lvl < 18 ? 2 : 3);
+  uint8_t max_kind = lvl < 10 ? 1 : (lvl < 30 ? 2 : 3);
   uint8_t count = 1 + (d4() % 3);
-  if (lvl < 5 && count > 2)
+  if (lvl < 6 && count > 2)
     count = 2;
 
   t->odds = 254;  // ODDS_100P equals the END marker
@@ -521,16 +732,31 @@ static void build_random_encounter(void) {
 static void build_boss_encounter(void) {
   const uint8_t n = tower_state.floor;
   EncounterTable *t = gen_table;
-  uint8_t idx = (n / 5) - 1;
-  if (idx >= sizeof(tower_bosses))
-    idx = sizeof(tower_bosses) - 1;
+  const uint8_t count = sizeof(tower_bosses);
+  const uint8_t idx = ((n / 5) - 1) % count;
   t->odds = 254;  // ODDS_100P equals the END marker
   t->layout = MONSTER_LAYOUT_1;
   t->monster1 = tower_bosses[idx];
-  t->monster1_level = area_level + 2 > 99 ? 99 : area_level + 2;
+  t->monster1_level = vary_level(area_level);
   t->monster1_tier = S_TIER;
   (t + 1)->odds = END;
   generate_encounter(gen_table);
+  // The boss name lives in RAM so it remains readable while ROM banks switch.
+  strcpy(sign_text, tower_boss_titles[idx]);
+  encounter.monsters[0].name = sign_text;
+}
+
+static void build_raid_boss_encounter(void) {
+  EncounterTable *t = gen_table;
+  t->odds = 254;
+  t->layout = MONSTER_LAYOUT_1;
+  t->monster1 = raid_bosses[raid_state.raid_id];
+  t->monster1_level = vary_level(area_level);
+  t->monster1_tier = S_TIER;
+  (t + 1)->odds = END;
+  generate_encounter(gen_table);
+  sprintf(sign_text, "%s", raid_boss_titles[raid_state.raid_id]);
+  encounter.monsters[0].name = sign_text;
 }
 
 /**
@@ -555,6 +781,13 @@ static bool gen_on_init(void) {
     if (floor_boss_pending) {
       floor_boss_pending = false;
       build_boss_encounter();
+      start_battle();
+      return true;
+    }
+  } else if (location == WORLD_LOC_RAID) {
+    if (raid_boss_pending) {
+      raid_boss_pending = false;
+      build_raid_boss_encounter();
       start_battle();
       return true;
     }
@@ -606,6 +839,8 @@ static void setup_banks(void) {
   world_fb.floor = &gen_floor;
   tower_fb.bank = WORLD_BANK;
   tower_fb.floor = &gen_floor;
+  raid_fb.bank = WORLD_BANK;
+  raid_fb.floor = &gen_floor;
 }
 
 static uint8_t neighbor(uint8_t z, Direction d) {
@@ -622,8 +857,11 @@ static uint8_t neighbor(uint8_t z, Direction d) {
 
 void world_enter_zone(uint8_t zone_id) BANKED {
   setup_banks();
+  if (zone_id >= WORLD_ZONE_COUNT)
+    zone_id = WORLD_START_ZONE;
   current_zone = zone_id;
   tower_state.active = false;
+  raid_state.active = false;
   direct_entry = true;
   set_active_floor(&world_fb);
 }
@@ -634,11 +872,22 @@ FloorBank *world_prepare_floor(FloorBank *f) BANKED {
   if (f == &world_fb) {
     if (direct_entry) {
       direct_entry = false;
+    } else if (raid_state.active && location == WORLD_LOC_RAID) {
+      raid_state.active = false;
+      current_zone = raid_state.entrance_zone_id;
     } else if (tower_state.active) {
       tower_state.active = false;
       current_zone = tower_state.entrance_zone_id;
     } else if (location == WORLD_LOC_ZONE) {
-      current_zone = neighbor(current_zone, active_exit.heading);
+      if (active_exit.heading == HERE &&
+        active_exit.col == WORLD_MAP_W / 2 + 2 &&
+        active_exit.row == WORLD_MAP_H / 2 + 2) {
+        const uint8_t trail_to = trail_destination(current_zone);
+        if (trail_to != 0xFF)
+          current_zone = trail_to;
+      } else {
+        current_zone = neighbor(current_zone, active_exit.heading);
+      }
     }
     generate_zone(current_zone);
     install_callbacks();
@@ -661,9 +910,34 @@ FloorBank *world_prepare_floor(FloorBank *f) BANKED {
     return f;
   }
 
+  if (f == &raid_fb) {
+    if (!raid_state.active) {
+      uint8_t id = raid_id_for_zone(current_zone);
+      if (id == 0xFF) {
+        generate_zone(current_zone);
+        install_callbacks();
+        return &world_fb;
+      }
+      raid_state.active = true;
+      tower_state.active = false;
+      raid_state.raid_id = id;
+      raid_state.entrance_zone_id = current_zone;
+      raid_state.floor = 1;
+    } else if (active_exit.heading == DOWN) {
+      if (raid_state.floor < WORLD_RAID_FLOORS)
+        raid_state.floor++;
+    } else if (raid_state.floor > 1) {
+      raid_state.floor--;
+    }
+    generate_raid_floor(raid_state.floor);
+    install_callbacks();
+    return f;
+  }
+
   // One of the original labyrinth floors.
   location = WORLD_LOC_DUNGEON;
   tower_state.active = false;
+  raid_state.active = false;
   area_town = false;
   area_biome = WORLD_BIOME_UNDERGROUND;
   return f;
@@ -681,10 +955,26 @@ bool world_in_town(void) BANKED {
   return location == WORLD_LOC_ZONE && area_town;
 }
 
-uint8_t world_area_level(void) BANKED {
+uint16_t world_area_level(void) BANKED {
   if (location == WORLD_LOC_DUNGEON)
-    return player.level < 5 ? 5 : player.level;
+    return hero_level < 5 ? 5 : hero_level;
   return area_level;
+}
+
+uint8_t world_tier_for_level(uint16_t level) BANKED {
+  if (level == 0)
+    level = 1;
+  if (level > MAX_LEVEL)
+    level = MAX_LEVEL;
+  return 1 + (level - 1) / WORLD_LEVELS_PER_TIER;
+}
+
+uint8_t world_current_tier(void) BANKED {
+  if (location == WORLD_LOC_ZONE)
+    return zone_biome(current_zone) + 1;
+  if (location == WORLD_LOC_DUNGEON)
+    return world_tier_for_level(hero_level);
+  return world_tier_for_level(area_level);
 }
 
 uint8_t world_biome(void) BANKED {
@@ -696,15 +986,14 @@ void world_area_name(char *buf) BANKED {
   case WORLD_LOC_TOWER:
     sprintf(buf, "Tower F%u", tower_state.floor);
     break;
+  case WORLD_LOC_RAID:
+    sprintf(buf, "Raid %u F%u", raid_state.raid_id + 1, raid_state.floor);
+    break;
   case WORLD_LOC_DUNGEON:
     sprintf(buf, "Labyrinth");
     break;
   default:
-    if (area_town)
-      sprintf(buf, "%s", town_names[area_biome]);
-    else
-      sprintf(buf, "%s %u-%u", biome_names[area_biome],
-        zone_col(current_zone) + 1, zone_row(current_zone) + 1);
+    sprintf(buf, "%s", zone_names[current_zone]);
   }
 }
 

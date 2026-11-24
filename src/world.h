@@ -16,7 +16,12 @@
 #define WORLD_ZONE_COLS 9
 #define WORLD_ZONE_ROWS 8
 #define WORLD_BIOME_COUNT 9
+#define WORLD_LEVEL_TIER_COUNT 9
+#define WORLD_LEVELS_PER_TIER 80
 #define WORLD_TOWER_MAX_FLOOR 100
+#define WORLD_RAID_COUNT 9
+#define WORLD_RAID_FLOORS 3
+#define WORLD_TRAIL_COUNT 16
 
 /**
  * Size (in map tiles) of a generated zone map.
@@ -62,6 +67,7 @@ typedef enum WorldBiome {
 typedef enum WorldLocation {
   WORLD_LOC_ZONE,
   WORLD_LOC_TOWER,
+  WORLD_LOC_RAID,
   WORLD_LOC_DUNGEON,
 } WorldLocation;
 
@@ -71,7 +77,15 @@ typedef struct TowerState {
   uint8_t entrance_zone_id;
 } TowerState;
 
+typedef struct RaidState {
+  bool active;
+  uint8_t raid_id;
+  uint8_t floor;
+  uint8_t entrance_zone_id;
+} RaidState;
+
 extern TowerState tower_state;
+extern RaidState raid_state;
 
 /**
  * Last town the player visited (respawn point).
@@ -119,7 +133,13 @@ bool world_in_town(void) BANKED;
 /**
  * @return The monster level for the current area.
  */
-uint8_t world_area_level(void) BANKED;
+uint16_t world_area_level(void) BANKED;
+
+/** Converts character or area level (1-720) into world tier (1-9). */
+uint8_t world_tier_for_level(uint16_t level) BANKED;
+
+/** Returns the tier of the current zone, raid, tower floor, or labyrinth. */
+uint8_t world_current_tier(void) BANKED;
 
 /**
  * @return The biome of the current area.
