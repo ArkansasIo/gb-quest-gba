@@ -255,10 +255,15 @@ static uint8_t damage_all(
  */
 static void damage_all_no_miss(uint16_t base_damage, DamageAspect type) {
   uint8_t dam_roll = d16();
-  uint16_t damage = calc_damage(dam_roll, base_damage);
+  uint32_t damage_total = calc_damage(dam_roll, base_damage);
 
   if (has_special(SPECIAL_HASTE))
-    damage += calc_damage(d16(), base_damage);
+    damage_total += calc_damage(d16(), base_damage);
+
+  /* Keep haste bonus damage inside the shared 16-bit damage range. */
+  if (damage_total > 65535UL)
+    damage_total = 65535UL;
+  const uint16_t damage = (uint16_t)damage_total;
 
   Monster *monster = encounter.monsters;
   for (uint8_t k = 0; k < 3; k++, monster++) {
