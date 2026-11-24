@@ -102,6 +102,6 @@ The ROM remains playable offline. Internet multiplayer requires the separate ser
 
 - [90-Zone World Atlas](docs/WORLD_ATLAS_90_ZONES.md): nine original fantasy realms, 90 zones, 270 sub-zones, primary biomes, sub-biomes, settlements, landmarks, level bands, and map connections.
 - [Canonical world data](data/world_atlas_90.json): machine-readable 10×9 world grid with stable IDs and neighbor links.
-- [Illustrated Aelmoor map concept](https://github.com/ArkansasIo/gb-quest-gba) — the parchment-style world map is a separate visual concept; the GBC interface should use a simplified tile-based map.
+- The parchment-style Aelmoor map is a visual concept; the GBC interface should use a simplified tile-based map.
 
 **Runtime status:** the current playable cartridge still uses its original 72-zone (9×8) grid. The 90-zone atlas and data model are committed as the next world-design foundation; the cartridge runtime, save bitset, zone transitions, biome scaling, and world-map UI have not yet been migrated or tested for 90 zones.
