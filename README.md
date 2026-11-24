@@ -122,3 +122,14 @@ These are original fantasy-game materials informed by broad fifth-edition tablet
 - [Original content catalog](data/creature_gear_item_catalog.json): 32 realm creatures, 12 act/world/arc bosses, 12 weapons, 12 armor pieces, and 22 usable/material/key/currency items.
 
 The catalog is design data. Existing six-attribute progression and four equipment slots are already represented in the GBC code; additional resources, damage types, expanded equipment slots, monster affixes, and world/arc boss scheduling still require runtime and server implementation.
+
+
+### Runtime gameplay logic added
+
+- World-boss and arc-boss rank constants are now defined in `src/progress.h`.
+- `monster_stats()` now scales world bosses (12× HP, 1.6× attack) and arc bosses (20× HP, 1.8× attack), with increased defense.
+- `monster_xp()` now grants rank-scaled XP for those encounter tiers.
+- Single-target and multi-target player attacks now share safe aspect mitigation in `src/combat_rules.h`. Critical/haste damage is resolved before resistance or vulnerability, and vulnerability doubling saturates instead of wrapping a 16-bit damage value.
+- `tests/combat_rules_test.c` covers neutral damage, resistance, vulnerability, overlapping flags, unrelated aspects, and overflow saturation.
+
+These are combat-runtime changes, not just catalog entries. The new world/arc rank values are available to callers, but the repository's encounter spawners and online server still need wiring to create scheduled public world-boss and multi-stage arc-boss events.
