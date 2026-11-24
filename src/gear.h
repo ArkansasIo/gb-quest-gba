@@ -2,6 +2,7 @@
 #define _GEAR_H
 
 #include <stdint.h>
+#include <gb/gb.h>
 
 #include "item.h"
 
@@ -69,32 +70,32 @@ extern const GearGrant gear_grants[GEAR_SLOT_COUNT];
  * @return The gear slot the item equips into, or `GEAR_SLOT_COUNT` if the
  * item is not equippable.
  */
-GearSlot gear_slot_for_item(ItemId id);
+GearSlot gear_slot_for_item(ItemId id) BANKED;
 
 /**
  * Toggles the gear slot: equips the first available equippable item, or
  * unequips the slot if it is occupied.
  */
-void gear_toggle(GearSlot slot);
+void gear_toggle(GearSlot slot) BANKED;
 
 /**
  * Recomputes the player's current stats from base stats and equipped gear.
  */
-void update_gear_stats(void);
+void update_gear_stats(void) BANKED;
 
 /**
  * Opens the gear screen.
  */
-void gear_open(void);
+void gear_open(void) BANKED;
 
 /**
  * Updates the gear screen.
  */
-void gear_update(void);
+void gear_update(void) BANKED;
 
 /**
  * Draws the gear screen.
  */
-void gear_draw(void);
+void gear_draw(void) BANKED;
 
 #endif

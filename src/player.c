@@ -12,6 +12,7 @@
 #include "player.h"
 #include "monster.h"
 #include "tables.h"
+#include "loot.h"
 #include "sound.h"
 #include "strings.h"
 
@@ -35,6 +36,40 @@ const char *player_class_names[CLASS_COUNT] = {
   "Bard", "Necromancer", "Assassin", "Dragoon", "Shaman", "Warlock",
   "Stalker", "Marauder",
 };
+/**
+ * Copies a NUL-terminated string from this bank into a RAM buffer.
+ */
+static void copy_name(const char *src, char *dst, uint8_t max) {
+  while (*src && max > 1) {
+    *dst++ = *src++;
+    max--;
+  }
+  *dst = 0;
+}
+
+void get_race_name(uint8_t race, char *buf, uint8_t max) BANKED {
+  copy_name(race < RACE_COUNT ? races[race].name : "?", buf, max);
+}
+
+void get_class_name(uint8_t player_class, char *buf, uint8_t max) BANKED {
+  copy_name(
+    player_class < CLASS_COUNT ? player_class_names[player_class] : "Test",
+    buf, max);
+}
+
+void apply_race_bonuses(void) BANKED {
+  if (player.race >= RACE_COUNT)
+    return;
+  const RaceDef *def = &races[player.race];
+  player.atk_base += def->atk_bonus;
+  player.def_base += def->def_bonus;
+  player.matk_base += def->matk_bonus;
+  player.mdef_base += def->mdef_bonus;
+  player.agl_base += def->agl_bonus;
+  player.max_hp += def->hp_bonus;
+  player.hp = player.max_hp;
+}
+
 const Ability *class_abilities[6];
 const Ability *player_abilities[6];
 uint8_t player_num_abilities = 0;
@@ -946,6 +981,7 @@ void update_player_stats(void) {
     update_stats(A_TIER, B_TIER, A_TIER, A_TIER, B_TIER, B_TIER, B_TIER);
     break;
   }
+  loot_capture_base();
 }
 
 /**

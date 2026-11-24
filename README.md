@@ -1,6 +1,58 @@
 # Labyrinth of the Dragon (GBC)
 An 8-bit Adventure RPG with D&D Monsters!
 
+## Action RPG Mode
+
+Combat happens in real time on the map. Monsters appear around you and fight
+you directly; there is no separate battle screen.
+
+### Controls
+
+| Button | Action |
+| --- | --- |
+| D-pad | Move |
+| B | Attack (a melee swing, or a magic bolt for spellcasters) |
+| A | Talk / open / read. With nothing in front of you: use the selected hotbar skill or potion |
+| SELECT | Dodge roll (two quick steps, briefly invulnerable) |
+| Hold B + SELECT | Switch the selected hotbar slot |
+| START | Pause menu (not available while enemies are near) |
+
+On the title screen, START continues your saved game and SELECT + START starts
+a new character.
+
+### Features
+
+* **Real-time combat.** Monsters chase you and flash before they attack, so you
+  can step or dodge out of the way. Each monster type fights differently: fast
+  and slow melee, ranged casters, ground slams and dragon breath. Hits push
+  enemies back, crits deal double damage, and damage numbers float above
+  targets. Some attacks poison or stun.
+* **Elites and bosses.** Some monsters spawn as tougher elites. Every 5th tower
+  floor has a boss, and bosses speed up when badly hurt.
+* **Loot.** Monsters and treasure chests drop gear with five rarities (Common,
+  Magic, Rare, Epic, Legendary) and random bonuses: ATK, DEF, MAT, MDF, AGL,
+  HP, SP, critical chance, life steal, gold find and regeneration. You have four
+  equipment slots: weapon, armor, off-hand and trinket.
+* **Inventory and stash.** A 16-slot bag, plus a 24-slot stash you can use in
+  any town. Sell items for gold from the ITEMS screen.
+* **Skills and hotbar.** Each of the 18 classes has 6 skills, unlocked at levels
+  1, 5, 8, 12, 16 and 20. Each level gives a skill point to learn a skill or
+  rank it up (up to rank 5). You get 4 hotbar slots for skills and potions.
+  Skills have SP costs and cooldowns.
+* **Character growth.** Each level gives 3 stat points to spend on STR, DEX,
+  INT, VIT, END and SPI. HP and SP regenerate over time, faster outside combat.
+* **Towns.** A shop sells random gear and potions, and a quest board offers
+  bounties: slay monsters, slay elites, explore a zone, climb the tower, or slay
+  a boss. Quests pay gold and XP.
+* **Open world.** A 9x8 grid of zones across nine regions, each with its own
+  look and monsters. Each region has a town at its center, and monsters get
+  stronger the farther you travel from the start. There is a 100-floor tower,
+  and the original labyrinth is entered from the zone north of the starting
+  town.
+* **Saving.** The game saves automatically to the cartridge's battery-backed
+  save memory whenever you enter a town. If you are defeated, you lose 10% of
+  your gold and wake up in the last town you visited.
+
 ## How to Build the ROM
 
 ### Depedencies
@@ -20,3 +72,4 @@ To build the ROM run the following commands:
 * `npm install`
 * `make assets`
 * `make`
+

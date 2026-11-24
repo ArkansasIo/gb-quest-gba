@@ -46,7 +46,7 @@ static void settings_draw_cursor(void) {
 /**
  * Draws the settings screen.
  */
-void settings_draw(void) {
+void settings_draw(void) BANKED {
   core.draw_text(VRAM_WINDOW_XY(2, 0), "SETTINGS", 8);
   for (uint8_t k = 0; k < SETTINGS_OPTIONS_COUNT; k++)
     settings_draw_option(k);
@@ -56,7 +56,7 @@ void settings_draw(void) {
 /**
  * Opens the settings screen.
  */
-void settings_open(void) {
+void settings_open(void) BANKED {
   game_state = GAME_STATE_SETTINGS;
   settings_draw();
 }
@@ -64,7 +64,7 @@ void settings_open(void) {
 /**
  * Updates the settings screen; toggles the selected option or returns.
  */
-void settings_update(void) {
+void settings_update(void) BANKED {
   if (was_pressed(J_UP)) {
     settings_cursor = (settings_cursor + SETTINGS_OPTIONS_COUNT - 1) % SETTINGS_OPTIONS_COUNT;
     play_sound(sfx_menu_move);

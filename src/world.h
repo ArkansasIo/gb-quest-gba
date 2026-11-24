@@ -1,57 +1,49 @@
 #ifndef _WORLD_H
 #define _WORLD_H
 
+#include <gb/gb.h>
 #include <stdint.h>
+#include <stdbool.h>
+
 #include "map.h"
 
 /**
- * Number of zones in the world: a 9x8 grid = 72 zones.
+ * The open world is a 9x8 grid of zones. Zone maps (and the 100 tower floors)
+ * are generated at runtime into RAM from a seed derived from the zone id, so
+ * every zone has a stable layout without costing ROM for map data.
  */
 #define WORLD_ZONE_COUNT 72
-
-/**
- * Grid dimensions of the world.
- */
 #define WORLD_ZONE_COLS 9
 #define WORLD_ZONE_ROWS 8
-
-/**
- * Map size (in map tiles) of each world zone.
- */
-#define WORLD_ZONE_MAP_W 8
-#define WORLD_ZONE_MAP_H 8
-
-#define WORLD_ZONE_MAP_BYTES (WORLD_ZONE_MAP_W * WORLD_ZONE_MAP_H)
-
-/**
- * Number of biomes.
- */
 #define WORLD_BIOME_COUNT 9
-
-/**
- * Number of tower floors.
- */
 #define WORLD_TOWER_MAX_FLOOR 100
 
 /**
- * Number of world routes and trails.
+ * Size (in map tiles) of a generated zone map.
  */
-#define WORLD_ROUTE_COUNT 18
-#define WORLD_TRAIL_COUNT 16
+#define WORLD_MAP_W 16
+#define WORLD_MAP_H 14
 
 /**
- * Bank in which the world zone data resides (see world_zones.c).
+ * Zone where a new game begins (a town in the north west region).
  */
-#define WORLD_ZONE_DATA_BANK 28
+#define WORLD_START_ZONE 10
 
 /**
- * Bank in which the tower data resides (see world_tower.c).
+ * Zone that holds the entrance to the tower.
  */
-#define WORLD_TOWER_DATA_BANK 26
+#define WORLD_TOWER_ZONE 31
 
 /**
- * Enumeration of world biomes.
+ * Zone that holds the entrance to the original labyrinth (floor 1).
  */
+#define WORLD_DUNGEON_ZONE 1
+
+/**
+ * Bank in which the world system resides.
+ */
+#define WORLD_BANK 23
+
 typedef enum WorldBiome {
   WORLD_BIOME_FOREST = 0,
   WORLD_BIOME_PLAINS,
@@ -65,154 +57,83 @@ typedef enum WorldBiome {
 } WorldBiome;
 
 /**
- * Flags denoting the type of a world zone.
+ * Where the player currently is.
  */
-typedef enum WorldZoneFlag {
-  /**
-   * Zone is a town, city, or village.
-   */
-  ZONE_FLAG_TOWN = 1,
-  /**
-   * Zone is a major connection hub.
-   */
-  ZONE_FLAG_HUB = 2,
-  /**
-   * Zone is underground (e.g. a dungeon).
-   */
-  ZONE_FLAG_UNDERGROUND = 4,
-  /**
-   * Zone contains an entrance to the tower.
-   */
-  ZONE_FLAG_TOWER_ENTRANCE = 8,
-} WorldZoneFlag;
+typedef enum WorldLocation {
+  WORLD_LOC_ZONE,
+  WORLD_LOC_TOWER,
+  WORLD_LOC_DUNGEON,
+} WorldLocation;
 
-/**
- * A zone of the open world. Each zone is a hand-authored map that the player
- * can walk across. Zones connect to neighboring zones via exit tiles.
- */
-typedef struct WorldZone {
-  /**
-   * Unique id of the zone (0 - 71).
-   */
-  uint8_t id;
-  /**
-   * Biome of the zone.
-   */
-  uint8_t biome;
-  /**
-   * Sub-biome variant of the zone (adds terrain variety).
-   */
-  uint8_t sub_biome;
-  /**
-   * Flags denoting the type of the zone.
-   */
-  uint8_t flags;
-  /**
-   * Pointer to the map system's floor data for this zone.
-   */
-  Floor *floor;
-} WorldZone;
-
-/**
- * A world route: a connection between two zones.
- */
-typedef struct WorldRoute {
-  /**
-   * Id of the zone the connection starts at.
-   */
-  uint8_t from;
-  /**
-   * Id of the zone the connection ends at.
-   */
-  uint8_t to;
-  /**
-   * Type of connection (0 = route, 1 = trail).
-   */
-  uint8_t kind;
-} WorldRoute;
-
-/**
- * State for the tower: a tower with 1-100 floors entered via a zone entrance.
- */
 typedef struct TowerState {
-  /**
-   * Whether the player is inside the tower.
-   */
   bool active;
-  /**
-   * Current tower floor (1 - 100).
-   */
   uint8_t floor;
-  /**
-   * Id of the zone with the tower entrance.
-   */
   uint8_t entrance_zone_id;
 } TowerState;
 
-/**
- * The world: 72 hand-authored zones in a 9x8 grid.
- */
-extern const WorldZone world_zones[WORLD_ZONE_COUNT];
-
-/**
- * Floor banks for the world zones.
- */
-extern const FloorBank world_zone_banks[WORLD_ZONE_COUNT];
-
-/**
- * Floor banks for the tower floors (indices 1 - 100).
- */
-extern const FloorBank tower_floor_banks[WORLD_TOWER_MAX_FLOOR + 1];
-
-/**
- * World routes and trails.
- */
-extern WorldRoute world_routes[WORLD_ROUTE_COUNT];
-extern WorldRoute world_trails[WORLD_TRAIL_COUNT];
-
-/**
- * The tower state.
- */
 extern TowerState tower_state;
 
 /**
- * Enters the zone with the given id, loading its map into the map system.
+ * Last town the player visited (respawn point).
  */
-void world_enter_zone(uint8_t zone_id);
+extern uint8_t world_last_town;
 
 /**
- * @return Id of the zone the player is currently in; 0xFF while in the tower.
+ * Highest tower floor the player has reached.
  */
-uint8_t world_current_zone(void);
+extern uint8_t world_best_tower_floor;
 
 /**
- * @return The biome of the given zone.
+ * Bit flags of zones the player has visited (72 bits).
  */
-WorldBiome world_zone_biome(uint8_t zone_id);
+extern uint8_t world_visited[9];
 
 /**
- * Enters the tower. Activates tower mode and enters tower floor 1.
+ * Enters the given zone directly (new game, respawn). Loads the floor but does
+ * not initialize the map controller.
  */
-void tower_enter(uint8_t zone_id);
+void world_enter_zone(uint8_t zone_id) BANKED;
 
 /**
- * Exits the tower, returning to the tower entrance zone.
+ * Called by the map system before any floor is loaded. Generates world zone
+ * and tower floor data when needed.
+ * @return The floor bank to load.
  */
-void tower_exit(void);
+FloorBank *world_prepare_floor(FloorBank *f) BANKED;
 
 /**
- * Moves down one tower floor.
+ * @return Id of the current zone, or 0xFF when in the tower or labyrinth.
  */
-void tower_go_down(void);
+uint8_t world_current_zone(void) BANKED;
 
 /**
- * Moves up one tower floor.
+ * @return Where the player currently is.
  */
-void tower_go_up(void);
+WorldLocation world_location(void) BANKED;
 
 /**
- * Called by the map system when a floor is loaded. Tracks the current zone.
+ * @return `true` if the player is in a town zone.
  */
-void world_on_load_floor(FloorBank *f);
+bool world_in_town(void) BANKED;
+
+/**
+ * @return The monster level for the current area.
+ */
+uint8_t world_area_level(void) BANKED;
+
+/**
+ * @return The biome of the current area.
+ */
+uint8_t world_biome(void) BANKED;
+
+/**
+ * Writes a short name for the current area into `buf` (max 18 chars).
+ */
+void world_area_name(char *buf) BANKED;
+
+/**
+ * Loads the respawn floor after the player is defeated.
+ */
+void world_respawn(void) BANKED;
 
 #endif

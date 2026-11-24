@@ -11,6 +11,7 @@
 #include "hero_select.h"
 #include "player.h"
 #include "map.h"
+#include "loot.h"
 #include "sound.h"
 #include "world.h"
 
@@ -40,7 +41,7 @@ static void draw_creation_header(void) {
 static void draw_race_list(void) {
   for (uint8_t k = 0; k < RACE_COUNT; k++) {
     char buf[16];
-    sprintf(buf, "%s", races[k].name);
+    get_race_name(k, buf, sizeof(buf));
     core.draw_text(VRAM_WINDOW_XY(2, 1 + k), buf, 12);
   }
 }
@@ -49,8 +50,27 @@ static void draw_race_list(void) {
  * Draws the race cursor.
  */
 static void draw_race_cursor(void) {
-  move_sprite(16, 8 + creation_race * 8, 8);
-  move_sprite(17, 16 + creation_race * 8, 8);
+  move_sprite(16, 8, 24 + creation_race * 8);
+  move_sprite(17, 0, 0);
+}
+
+/**
+ * Palette for the creation screen text (glyphs use color 3 on color 1).
+ */
+static const palette_color_t creation_palette[4] = {
+  RGB8(8, 8, 16), RGB8(24, 28, 56), RGB8(90, 100, 150), RGB8(235, 235, 220),
+};
+
+/**
+ * Clears and shows the window layer used by the creation screen.
+ */
+static void setup_creation_window(void) {
+  core.load_bg_palette(creation_palette, 7, 1);
+  core.load_sprite_palette(creation_palette, 7, 1);
+  core.fill(VRAM_WINDOW, 20, 18, FONT_SPACE, 0x0F);
+  set_sprite_tile(16, '>' + FONT_OFFSET);
+  set_sprite_prop(16, 0x0F);
+  move_win(7, 0);
 }
 
 /**
@@ -62,7 +82,7 @@ static void draw_class_list(void) {
     char buf[16];
     if (idx >= CLASS_COUNT)
       break;
-    sprintf(buf, "%s", player_class_names[idx]);
+    get_class_name(idx, buf, sizeof(buf));
     core.draw_text(VRAM_WINDOW_XY(2, 1 + r), buf, 14);
   }
 }
@@ -82,22 +102,8 @@ static void creation_adjust_scroll(void) {
  */
 static void draw_class_cursor(void) {
   creation_adjust_scroll();
-  move_sprite(16, 8, 8 + (creation_class - creation_class_scroll) * 8);
-  move_sprite(17, 16, 8 + (creation_class - creation_class_scroll) * 8);
-}
-
-/**
- * Applies the selected race's stat bonuses to the new character.
- */
-static void apply_race_bonuses(void) {
-  const RaceDef *def = &races[player.race];
-  player.atk_base += def->atk_bonus;
-  player.def_base += def->def_bonus;
-  player.matk_base += def->matk_bonus;
-  player.mdef_base += def->mdef_bonus;
-  player.agl_base += def->agl_bonus;
-  player.max_hp += def->hp_bonus;
-  player.hp = player.max_hp;
+  move_sprite(16, 8, 24 + (creation_class - creation_class_scroll) * 8);
+  move_sprite(17, 0, 0);
 }
 
 /**
@@ -114,12 +120,10 @@ void init_hero_select(void) NONBANKED {
   creation_class = 0;
   creation_class_scroll = 0;
 
+  setup_creation_window();
   draw_creation_header();
   draw_race_list();
   draw_race_cursor();
-
-  move_sprite(16, 8 + creation_race * 8, 8);
-  move_sprite(17, 16 + creation_race * 8, 8);
 
   DISPLAY_ON;
 }
@@ -139,8 +143,11 @@ static void start_game(void) NONBANKED {
     player.gear[k] = ITEM_INVALID;
   update_gear_stats();
   apply_race_bonuses();
+  loot_new_game();
+  loot_capture_base();
+  full_heal_player();
 
-  world_enter_zone(0);
+  world_enter_zone(WORLD_START_ZONE);
   init_world_map();
 
   game_state = GAME_STATE_WORLD_MAP;
@@ -150,7 +157,24 @@ static void start_game(void) NONBANKED {
 /**
  * Updates the character creation screen.
  */
+bool hero_continue_requested;
+
 void update_hero_select(void) NONBANKED {
+  if (hero_continue_requested) {
+    // Continue the saved game.
+    hero_continue_requested = false;
+    DISPLAY_OFF;
+    if (load_game()) {
+      world_enter_zone(world_last_town);
+      init_world_map();
+      game_state = GAME_STATE_WORLD_MAP;
+      DISPLAY_ON;
+    } else {
+      init_hero_select();
+    }
+    return;
+  }
+
   if (creation_stage == CREATION_STAGE_RACE) {
     if (was_pressed(J_UP)) {
       creation_race = (creation_race + RACE_COUNT - 1) % RACE_COUNT;

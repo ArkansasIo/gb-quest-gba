@@ -8,8 +8,11 @@
 #include <stdio.h>
 #include <rand.h>
 
+#include "arpg.h"
+#include "arpg_menu.h"
 #include "battle.h"
 #include "core.h"
+#include "credits.h"
 #include "floor.h"
 #include "map.h"
 #include "sound.h"
@@ -1746,6 +1749,18 @@ static void start_move(Direction d) {
     play_wall_hit_sfx = true;
   }
 
+  {
+    int8_t tx = hero_x(), ty = hero_y();
+    switch (d) {
+    case UP: ty--; break;
+    case DOWN: ty++; break;
+    case LEFT: tx--; break;
+    case RIGHT: tx++; break;
+    }
+    if (arpg_tile_blocked(tx, ty))
+      return;
+  }
+
   if (destination->map_attr == MAP_WALL) {
     if (play_wall_hit_sfx) {
       play_sound(sfx_wall_hit);
@@ -1775,6 +1790,13 @@ static void start_move(Direction d) {
  * a given direction.
  */
 static void check_map_move(void) {
+  const Direction forced = arpg_forced_move();
+  if (forced != HERE) {
+    start_move(forced);
+    return;
+  }
+  if (arpg_block_input)
+    return;
   if (is_down(J_UP))
     start_move(UP);
   else if (is_down(J_DOWN))
@@ -2317,17 +2339,26 @@ static bool check_action(void) {
       return true;
     if (check_levers())
       return true;
-    return on_action();
+    if (on_action())
+      return true;
+    return arpg_on_action();
   }
   return false;
 }
 
 void set_active_floor(FloorBank *f) BANKED {
+  f = world_prepare_floor(f);
   load_floor(f);
-  world_on_load_floor(f);
   active_map = &maps[0];
   set_hero_position(default_x, default_y);
   reset_map_objects();
+  arpg_floor_changed();
+}
+
+uint8_t map_attr_at(int8_t x, int8_t y) BANKED {
+  MapTile tile;
+  get_map_tile(&tile, x, y);
+  return tile.blank ? MAP_WALL : tile.map_attr;
 }
 
 void remap_exit(
@@ -2365,6 +2396,7 @@ static void initialize_world_map(void) {
   init_npcs();
   init_flames();
   init_hud();
+  arpg_world_init();
   update_local_tiles();
   refresh_map_screen();
 
@@ -2395,10 +2427,8 @@ void return_from_death(void) NONBANKED {
 
   player.hp = player.max_hp;
   player.sp = player.max_sp;
-  player.magic_keys = 0;
-  player.got_magic_key = true;
 
-  set_active_floor(&bank_floor1);
+  world_respawn();
   initialize_world_map();
 
   map_fade_in(MAP_STATE_WAITING);
@@ -2446,15 +2476,35 @@ void update_map(void) {
     update_map_menu_hp_sp();
   }
 
+  if (arpg_respawn_request) {
+    arpg_respawn_request = false;
+    encounter.on_victory = NULL;
+    world_respawn();
+    initialize_world_map();
+    toggle_sprites();
+    map_fade_in(MAP_STATE_WAITING);
+    return;
+  }
+
+  if (arpg_restore_npcs && map_state == MAP_STATE_WAITING) {
+    arpg_restore_npcs = false;
+    wait_vbl_done();
+    DISPLAY_OFF;
+    init_npcs();
+    init_flames();
+    DISPLAY_ON;
+  }
+
   switch (map_state) {
   case MAP_STATE_WAITING:
-    if (encounter.on_victory) {
+    if (encounter.on_victory && !arpg_in_combat) {
       on_victory();
       break;
     }
     if (on_init())
       break;
-    if (was_pressed(J_START)) {
+    if (was_pressed(J_START) && !arpg_in_combat) {
+      arpg_hide_hud();
       show_map_menu();
       return;
     }
@@ -2463,8 +2513,11 @@ void update_map(void) {
     break;
   case MAP_STATE_MOVING:
     update_map_move();
+    if (map_state == MAP_STATE_MOVING && arpg_fast_move())
+      update_map_move();
     break;
   case MAP_STATE_TEXTBOX_OPEN:
+    arpg_hide_hud();
     textbox.open(textbox_message);
     map_state = MAP_STATE_TEXTBOX;
     // Intentionally fall through...
@@ -2504,14 +2557,24 @@ void update_map(void) {
       init_hud();
       init_flames();
       init_npcs();
+      if (arpg_menu_used) {
+        // A menu screen drew over the dungeon map: restore it.
+        arpg_menu_used = false;
+        DISPLAY_OFF;
+        core.load_bg_palette(floor_palettes, 0, 7);
+        refresh_map_screen();
+        DISPLAY_ON;
+      }
+      arpg_menu_closed();
       break;
     }
     return;
   case MAP_STATE_INITIATE_BATTLE:
-    init_timer(battle_wait_timer, 30);
-    play_sound(sfx_start_battle);
-    map_fade_out(MAP_STATE_START_BATTLE);
-    return;
+    // Real-time combat: monsters spawn onto the map.
+    map_state = MAP_STATE_WAITING;
+    hero_state = HERO_STILL;
+    arpg_begin_encounter();
+    break;
   case MAP_STATE_TELEPORT:
     map_fade_out(MAP_STATE_LOAD_EXIT);
     play_sound(sfx_no_no_square);
@@ -2522,12 +2585,15 @@ void update_map(void) {
   update_hero();
   update_flames();
   update_hud();
-  update_npcs();
+  if (!arpg_in_combat)
+    update_npcs();
 
   if (refresh_local_tiles) {
     refresh_local_tiles = false;
     update_local_tiles();
   }
+
+  arpg_update();
 }
 
 void update_world_map(void) NONBANKED {
@@ -2539,6 +2605,13 @@ void update_world_map(void) NONBANKED {
     init_battle();
   } else {
     update_map();
+    if (arpg_credits_pending && map_state == MAP_STATE_WAITING) {
+      arpg_credits_pending = false;
+      map_state = MAP_STATE_INACTIVE;
+      clear_map_sprites();
+      DISPLAY_OFF;
+      init_credits();
+    }
   }
 }
 

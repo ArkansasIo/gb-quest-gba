@@ -1,5 +1,9 @@
 ifndef GBDK_HOME
+  ifneq ($(wildcard ./gbdk/bin/lcc*),)
+	GBDK_HOME = ./gbdk/
+  else
 	GBDK_HOME = ~/gbdk/
+  endif
 endif
 
 PROJECTNAME = LabyrinthOfTheDragon
@@ -16,9 +20,11 @@ CART_TYPE=0x1B
 LCC = $(GBDK_HOME)bin/lcc
 LCCFLAGS = -Wm-yC -Wm-yt$(CART_TYPE) -Wl-yo$(ROM_BANKS) -Wl-ya$(RAM_BANKS)
 
-PNG2BIN := ./tools/png2bin
-TABLES2C := ./tools/tables2c
-STRINGS2C := ./tools/strings2c
+# Tools are run through node explicitly so the build also works when the
+# project path contains spaces (shebang lines break in that case).
+PNG2BIN := node ./tools/png2bin
+TABLES2C := node ./tools/tables2c
+STRINGS2C := node ./tools/strings2c
 
 # GBDK_DEBUG = ON
 ifdef GBDK_DEBUG

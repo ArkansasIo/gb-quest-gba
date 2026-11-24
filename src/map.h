@@ -1583,6 +1583,12 @@ void set_palette_at(uint8_t map_id, int8_t x, int8_t y, uint8_t palette) BANKED;
 void set_tile_at(uint8_t map_id, int8_t x, int8_t y, uint8_t tile) BANKED;
 
 /**
+ * @return The map attribute (`MAP_WALL`, `MAP_GROUND`, ...) of the tile at the
+ *   given position in the active map. Tiles outside the map are walls.
+ */
+uint8_t map_attr_at(int8_t x, int8_t y) BANKED;
+
+/**
  * Remaps an exit's destination.
  */
 void remap_exit(

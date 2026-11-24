@@ -20,7 +20,7 @@ static void draw_stat(const char *label, uint16_t value, uint8_t x, uint8_t y) {
 /**
  * Draws the character screen.
  */
-void draw_character_screen(void) {
+void draw_character_screen(void) BANKED {
   char buf[16];
 
   core.draw_text(VRAM_WINDOW_XY(2, 1), "CHARACTER", 9);
@@ -28,7 +28,7 @@ void draw_character_screen(void) {
   sprintf(buf, "%s", player.name);
   core.draw_text(VRAM_WINDOW_XY(2, 2), buf, 8);
 
-  sprintf(buf, "%s", player_class_names[player.player_class]);
+  get_class_name(player.player_class, buf, sizeof(buf));
   core.draw_text(VRAM_WINDOW_XY(12, 2), buf, 8);
 
   draw_stat("LVL", player.level, 2, 3);
@@ -44,7 +44,7 @@ void draw_character_screen(void) {
 /**
  * Initializes the character screen.
  */
-void init_character_screen(void) {
+void init_character_screen(void) BANKED {
   DISPLAY_OFF;
   draw_character_screen();
   DISPLAY_ON;
@@ -53,7 +53,7 @@ void init_character_screen(void) {
 /**
  * Updates the character screen; returns to the world map on A/B/START.
  */
-void update_character_screen(void) {
+void update_character_screen(void) BANKED {
   if (was_pressed(J_A) || was_pressed(J_B) || was_pressed(J_START)) {
     map_state = MAP_STATE_WAITING;
     game_state = GAME_STATE_WORLD_MAP;

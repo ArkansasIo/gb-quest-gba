@@ -288,6 +288,21 @@ extern Player player;
 extern const char *player_class_names[CLASS_COUNT];
 
 /**
+ * Copies the name of a race into a RAM buffer (bank safe).
+ */
+void get_race_name(uint8_t race, char *buf, uint8_t max) BANKED;
+
+/**
+ * Copies the name of a class into a RAM buffer (bank safe).
+ */
+void get_class_name(uint8_t player_class, char *buf, uint8_t max) BANKED;
+
+/**
+ * Applies the player's race stat bonuses (bank safe).
+ */
+void apply_race_bonuses(void) BANKED;
+
+/**
  * Basic attack for the player classes. Used by new classes' ability 0.
  */
 void generic_base_attack(void);

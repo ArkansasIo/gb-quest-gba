@@ -3,6 +3,7 @@
 #include <rand.h>
 #include <stdint.h>
 
+#include "arpg_menu.h"
 #include "battle.h"
 #include "credits.h"
 #include "core.h"
@@ -107,6 +108,9 @@ static inline void game_loop(void) {
     break;
   case GAME_STATE_CREDITS:
     update_credits();
+    break;
+  case GAME_STATE_ARPG_MENU:
+    arpg_menu_update();
     break;
   }
 }

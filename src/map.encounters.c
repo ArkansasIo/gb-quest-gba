@@ -1,5 +1,6 @@
 #pragma bank 0
 
+#include "arpg.h"
 #include "encounter.h"
 #include "monster.h"
 
@@ -21,7 +22,7 @@ void config_random_encounter(uint8_t s, uint8_t ic, uint8_t i, bool ts) {
 }
 
 bool check_random_encounter(void) {
-  if (disable_encounters)
+  if (disable_encounters || arpg_in_combat)
     return false;
 
   MapTile *here = local_tiles;

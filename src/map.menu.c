@@ -2,11 +2,9 @@
 
 #include <stdio.h>
 
+#include "arpg_menu.h"
 #include "map.h"
 #include "player.h"
-#include "character.h"
-#include "gear.h"
-#include "settings.h"
 #include "sound.h"
 
 #define MAP_MENU_X 0x00
@@ -41,34 +39,7 @@ const palette_color_t main_menu_palette[] = {
 static const Tilemap map_menu_tilemap = { 20, 18, BANK_1, tilemap_map_menu };
 
 static void update_cursor(void) {
-  uint8_t sx, sy;
-  switch (map_menu.cursor) {
-  case MAP_MENU_CURSOR_SAVE:
-    sx = 16 - 2;
-    sy = CURSOR_Y;
-    break;
-  case MAP_MENU_CURSOR_CHARACTER:
-    sx = 16 - 2;
-    sy = CURSOR_Y - 24;
-    break;
-  case MAP_MENU_CURSOR_GEAR:
-    sx = 16 - 2;
-    sy = CURSOR_Y - 48;
-    break;
-  case MAP_MENU_CURSOR_SETTINGS:
-    sx = 16 - 2;
-    sy = CURSOR_Y - 72;
-    break;
-  default:
-    sx = 100 - 2;
-    sy = CURSOR_Y - 96;
-    break;
-  }
-
-  move_sprite(CURSOR_SPRITE_ID + 0, sx, sy);
-  move_sprite(CURSOR_SPRITE_ID + 1, sx + 8, sy);
-  move_sprite(CURSOR_SPRITE_ID + 2, sx, sy + 8);
-  move_sprite(CURSOR_SPRITE_ID + 3, sx + 8, sy + 8);
+  arpg_menu_draw_cursor(map_menu.cursor);
 }
 
 static void hide_cursor(void) {
@@ -124,11 +95,11 @@ void update_map_menu_stats(void) {
   update_map_menu_hp_sp();
 
   // ATK, DEF, MATK, MDEF, AGL
-  draw_number_at(player.atk_base, 0x6, 0x17);
-  draw_number_at(player.def_base, 0x10, 0x17);
-  draw_number_at(player.matk_base, 0x6, 0x18);
-  draw_number_at(player.mdef_base, 0x10, 0x18);
-  draw_number_at(player.agl_base, 0x10, 0x19);
+  draw_number_at(player.atk, 0x6, 0x17);
+  draw_number_at(player.def, 0x10, 0x17);
+  draw_number_at(player.matk, 0x6, 0x18);
+  draw_number_at(player.mdef, 0x10, 0x18);
+  draw_number_at(player.agl, 0x10, 0x19);
 }
 
 void init_map_menu(void) {
@@ -159,11 +130,8 @@ void show_map_menu(void) {
 
   core.load_bg_palette(main_menu_palette, 7, 1);
   clear_map_sprites();
-  core.draw_text(VRAM_WINDOW_XY(2, 2), "SAVE", 4);
-  core.draw_text(VRAM_WINDOW_XY(2, 3), "CHARACTER", 9);
-  core.draw_text(VRAM_WINDOW_XY(2, 4), "GEAR", 4);
-  core.draw_text(VRAM_WINDOW_XY(2, 5), "SETTINGS", 8);
-  core.draw_text(VRAM_WINDOW_XY(2, 6), "QUIT", 4);
+  update_map_menu_stats();
+  arpg_menu_draw_entries();
   update_cursor();
 
   play_sound(sfx_next_round);
@@ -182,35 +150,37 @@ void update_map_menu(void) {
   if (map_menu.state == MAP_MENU_CLOSED)
     return;
 
-  if (was_pressed(J_UP)) {
-    play_sound(sfx_menu_move);
-    map_menu.cursor = (map_menu.cursor + MAP_MENU_CURSOR_COUNT - 1) % MAP_MENU_CURSOR_COUNT;
-    update_cursor();
-  } else if (was_pressed(J_DOWN)) {
-    play_sound(sfx_menu_move);
-    map_menu.cursor = (map_menu.cursor + 1) % MAP_MENU_CURSOR_COUNT;
+  if (arpg_menu_returned) {
+    arpg_menu_returned = false;
+    // Returning from a screen: refresh stats and the cursor.
+    update_map_menu_stats();
+    arpg_menu_draw_entries();
     update_cursor();
   }
 
-  if (was_pressed(J_START) || was_pressed(J_B) || was_pressed(J_A)) {
-    switch (map_menu.cursor) {
-    case MAP_MENU_CURSOR_CHARACTER:
-      play_sound(sfx_menu_move);
-      init_character_screen();
-      game_state = GAME_STATE_CHARACTER;
-      break;
-    case MAP_MENU_CURSOR_GEAR:
-      play_sound(sfx_menu_move);
-      gear_open();
-      break;
-    case MAP_MENU_CURSOR_SETTINGS:
-      play_sound(sfx_menu_move);
-      settings_open();
-      break;
-    default:
-      play_sound(sfx_menu_move);
+  uint8_t c = map_menu.cursor;
+  if (was_pressed(J_UP) || was_pressed(J_DOWN)) {
+    c = c < 3 ? c + 3 : c - 3;
+  } else if (was_pressed(J_LEFT)) {
+    c = (c % 3 == 0) ? c + 2 : c - 1;
+  } else if (was_pressed(J_RIGHT)) {
+    c = (c % 3 == 2) ? c - 2 : c + 1;
+  }
+  if (c != map_menu.cursor) {
+    play_sound(sfx_menu_move);
+    map_menu.cursor = c;
+    update_cursor();
+  }
+
+  if (was_pressed(J_START) || was_pressed(J_B)) {
+    hide_map_menu();
+  } else if (was_pressed(J_A)) {
+    if (map_menu.cursor == ARPG_MENU_RETURN) {
       hide_map_menu();
-      break;
+    } else if (arpg_menu_open(map_menu.cursor)) {
+      play_sound(sfx_menu_move);
+    } else {
+      play_sound(sfx_error);
     }
   }
 }

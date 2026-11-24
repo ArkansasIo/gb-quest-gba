@@ -33,7 +33,7 @@ const GearItemDef gear_armors[GEAR_ARMORS_COUNT] = {
   { "Vambraces", "Gauntlets of the Wolf", "Galeforce", 5, 0, 0, 0, 0, 3 },
 };
 
-GearSlot gear_slot_for_item(ItemId id) {
+GearSlot gear_slot_for_item(ItemId id) BANKED {
   switch (id) {
   case ITEM_ATK_UP:
     return GEAR_SLOT_WEAPON;
@@ -48,7 +48,7 @@ GearSlot gear_slot_for_item(ItemId id) {
  * Applies the stat bonus of every equipped gear item to the player's current
  * stats.
  */
-void update_gear_stats(void) {
+void update_gear_stats(void) BANKED {
   uint8_t atk = 0;
   uint8_t def = 0;
   uint8_t matk = 0;
@@ -75,7 +75,7 @@ void update_gear_stats(void) {
 /**
  * Toggles a gear slot between equipped and unequipped.
  */
-void gear_toggle(GearSlot slot) {
+void gear_toggle(GearSlot slot) BANKED {
   if (player.gear[slot] != ITEM_INVALID) {
     player.gear[slot] = ITEM_INVALID;
     play_sound(sfx_menu_move);
@@ -136,7 +136,7 @@ static void gear_draw_slot(GearSlot slot) {
 /**
  * Draws the gear screen contents.
  */
-void gear_draw(void) {
+void gear_draw(void) BANKED {
   for (uint8_t k = 0; k < GEAR_SLOT_COUNT; k++)
     gear_draw_slot((GearSlot)k);
 }
@@ -144,7 +144,7 @@ void gear_draw(void) {
 /**
  * Opens the gear screen.
  */
-void gear_open(void) {
+void gear_open(void) BANKED {
   game_state = GAME_STATE_GEAR;
   gear_draw();
   update_gear_stats();
@@ -153,7 +153,7 @@ void gear_open(void) {
 /**
  * Updates the gear screen: moves the cursor, toggles gear, or shows details.
  */
-void gear_update(void) {
+void gear_update(void) BANKED {
   static uint8_t gear_cursor = 0;
 
   if (was_pressed(J_UP)) {

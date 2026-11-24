@@ -6,6 +6,7 @@
 
 #include "core.h"
 #include "hero_select.h"
+#include "loot.h"
 #include "sound.h"
 
 #define MAX_ANIMATION_SPRITES 20
@@ -475,6 +476,11 @@ void update_main_title(void) NONBANKED {
       DISPLAY_OFF;
       clear_sprites();
       game_state = GAME_STATE_HERO_SELECT;
+      // START continues a saved game; SELECT+START starts a new one.
+      if (!is_down(J_SELECT) && save_exists()) {
+        hero_continue_requested = true;
+        return;
+      }
       init_hero_select();
       return;
     }
