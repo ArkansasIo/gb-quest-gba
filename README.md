@@ -113,3 +113,12 @@ The ROM remains playable offline. Internet multiplayer requires the separate ser
 - [Canonical campaign and map data](data/campaign_and_instances.json): 60 main quests, 36 side quests, 42 dungeon maps, 9 raid maps, 42 trial maps, and 18 towers with 100-floor progression maps each.
 
 These are original fantasy-game materials informed by broad fifth-edition tabletop play patterns, not copied D&D adventure text, settings, stat blocks, or published maps. Instance maps are currently logical node layouts and floor templates; finished GBC tilemaps and playable quest/instance runtime integration remain future implementation work.
+
+
+## Character, Combat, Gear, Creatures & Boss Systems
+
+- [Character and combat stat specification](docs/CHARACTER_COMBAT_ITEM_SYSTEM.md): primary attributes, derived stats, sub-stats, resources, damage, resistances, itemization, creature roles, and boss rank rules.
+- [System formulas and schema](data/character_combat_item_system.json): current-runtime alignment, stat formulas/caps, affixes, rarities, equipment slots, damage types, and rank scaling targets.
+- [Original content catalog](data/creature_gear_item_catalog.json): 32 realm creatures, 12 act/world/arc bosses, 12 weapons, 12 armor pieces, and 22 usable/material/key/currency items.
+
+The catalog is design data. Existing six-attribute progression and four equipment slots are already represented in the GBC code; additional resources, damage types, expanded equipment slots, monster affixes, and world/arc boss scheduling still require runtime and server implementation.
