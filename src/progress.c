@@ -313,9 +313,19 @@ void monster_stats(uint8_t type, uint8_t tier, uint8_t rank, uint16_t level,
   if (rank == 1) {
     hp *= 2;
     atk = atk * 5 / 4;
-  } else if (rank == 2) {
+  } else if (rank == MONSTER_RANK_BOSS) {
     hp *= 3;
     atk = atk * 13 / 10;
+  } else if (rank == MONSTER_RANK_WORLD_BOSS) {
+    /* Public encounter target: durable against a coordinated raid group. */
+    hp *= 12;
+    atk = atk * 16 / 10;
+    def = def * 12 / 10;
+  } else if (rank == MONSTER_RANK_ARC_BOSS) {
+    /* Campaign pinnacle encounter: tuned for an organized 8-12 player raid. */
+    hp *= 20;
+    atk = atk * 18 / 10;
+    def = def * 14 / 10;
   }
 
   out->hp = cap16(hp, 65000);
@@ -328,8 +338,10 @@ uint32_t monster_xp(uint16_t level, uint8_t tier, uint8_t rank) BANKED {
   if (tier > 3) tier = 3;
   uint32_t xp = xp_to_next(level) / (8 + level / 40);
   xp = xp * tier_xp[tier] / 100;
-  if (rank == 1) xp *= 2;
-  if (rank == 2) xp *= 4;
+  if (rank == MONSTER_RANK_ELITE) xp *= 2;
+  else if (rank == MONSTER_RANK_BOSS) xp *= 4;
+  else if (rank == MONSTER_RANK_WORLD_BOSS) xp *= 12;
+  else if (rank == MONSTER_RANK_ARC_BOSS) xp *= 20;
   if (hero_level > level + 15)
     xp /= 5;
   return xp ? xp : 1;
