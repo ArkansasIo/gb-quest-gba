@@ -22,6 +22,7 @@
 #include "arpg.h"
 #include "core.h"
 #include "encounter.h"
+#include "elite_affixes.h"
 #include "item.h"
 #include "loot.h"
 #include "map.h"
@@ -101,6 +102,7 @@ typedef struct Mob {
   Direction dir;
   uint8_t kind;
   uint8_t rank;      // 0 normal, 1 elite, 2 boss
+  uint8_t affix;     // one compact combat modifier for elite monsters
   uint8_t move_cd;
   uint8_t atk_cd;
   uint8_t windup;
@@ -468,12 +470,23 @@ static uint8_t entry_ready(uint8_t entry) {
 static void draw_hud(void) {
   char buf[24];
   char name[12];
-  if (boss_title_timer && encounter.monsters[0].name) {
-    strncpy(buf, encounter.monsters[0].name, 20);
-    buf[20] = 0;
-    core.draw_text(VRAM_WINDOW, buf, 20);
-    hud_dirty = false;
-    return;
+  if (boss_title_timer) {
+    if (mobs[0].rank == 2 && encounter.monsters[0].name) {
+      strncpy(buf, encounter.monsters[0].name, 20);
+      buf[20] = 0;
+      core.draw_text(VRAM_WINDOW, buf, 20);
+      hud_dirty = false;
+      return;
+    }
+    for (uint8_t k = 0; k < MAX_MOBS; k++) {
+      if (mobs[k].active && mobs[k].rank == 1) {
+        strncpy(buf, elite_affix_title(mobs[k].affix), 20);
+        buf[20] = 0;
+        core.draw_text(VRAM_WINDOW, buf, 20);
+        hud_dirty = false;
+        return;
+      }
+    }
   }
   const uint8_t entry = hotbar[hotbar_sel];
   hotbar_entry_name(entry, name);
@@ -607,14 +620,14 @@ static uint8_t move_delay(const Mob *m) {
   }
   if (enraged(m))
     d >>= 1;
-  return d;
+  return elite_affix_delay(d, m->affix);
 }
 
 static uint8_t attack_delay(const Mob *m) {
   uint8_t d = m->kind == AI_SLOW ? 90 : 72;
   if (enraged(m))
     d -= d / 3;
-  return d;
+  return elite_affix_delay(d, m->affix);
 }
 
 /**
@@ -684,6 +697,13 @@ void arpg_begin_encounter(void) BANKED {
     else if ((rand() & 7) == 0 && (area >= 5 || dungeon))
       m->rank = 1;
 
+    m->affix = ELITE_AFFIX_NONE;
+    if (m->rank == 1) {
+      m->affix = (uint8_t)(ELITE_AFFIX_BERSERKER + (rand() & 3));
+      if (boss_title_timer < 90)
+        boss_title_timer = 90;
+    }
+
     // Monster level: the area level (scripted labyrinth monsters keep the
     // level they were designed for, but never fall far behind the hero).
     uint16_t lvl = area;
@@ -701,12 +721,12 @@ void arpg_begin_encounter(void) BANKED {
     monster_stats(mon->type, mon->exp_tier, m->rank, lvl, &st);
     mon->max_hp = st.hp;
     mon->hp = st.hp;
-    m->atk = st.atk;
-    m->def = st.def;
-    m->mdef = st.mdef;
+    m->atk = elite_affix_attack(st.atk, m->affix);
+    m->def = elite_affix_defense(st.def, m->affix);
+    m->mdef = elite_affix_defense(st.mdef, m->affix);
 
-    m->move_cd = 20 + count * 10;
-    m->atk_cd = 40;
+    m->move_cd = elite_affix_delay(20 + count * 10, m->affix);
+    m->atk_cd = elite_affix_delay(40, m->affix);
     m->palette = count == 2 ? 3 : 6 + count;
     m->tile_root = 0x20 + 0x20 * count;
 
@@ -743,17 +763,17 @@ static void end_combat(bool victory);
 /**
  * Deals damage from a monster to the hero (defense, dodge, block, shield).
  */
-static void hurt_hero(uint16_t raw, bool magic) {
+static uint16_t hurt_hero(uint16_t raw, bool magic) {
   if (iframes || player.hp == 0)
-    return;
+    return 0;
   if (debug_god_mode) {
     iframes = HERO_IFRAMES;
-    return;
+    return 0;
   }
   if (d128() < (uint16_t)hs.dodge * 128 / 100) {
     iframes = 20;
     play_sound(sfx_evade);
-    return;
+    return 0;
   }
   const uint16_t defense = magic ? hs.mdef : hs.def;
   uint32_t d = raw > defense / 2 ? raw - defense / 2 : 0;
@@ -773,12 +793,30 @@ static void hurt_hero(uint16_t raw, bool magic) {
   iframes = HERO_IFRAMES;
   if (d == 0) {
     play_sound(sfx_mid_powerup);
-    return;
+    return 0;
   }
-  player.hp = d >= player.hp ? 0 : player.hp - (uint16_t)d;
+  const uint16_t applied = d >= player.hp ? player.hp : (uint16_t)d;
+  player.hp -= applied;
   popup_number(hero_x(), hero_y(), cap16(d), PAL_FX);
   play_sound(magic ? sfx_monster_attack2 : sfx_monster_attack1);
   player_hp_and_sp_updated = true;
+  return applied;
+}
+
+static uint16_t hurt_hero_from_mob(Mob *m, uint16_t raw, bool magic) {
+  const uint16_t dealt = hurt_hero(raw, magic);
+  const uint16_t healed = elite_affix_leech(dealt, m->affix);
+  if (healed) {
+    Monster *mon = encounter.monsters + m->slot;
+    if (mon->hp < mon->max_hp) {
+      const uint16_t room = mon->max_hp - mon->hp;
+      const uint16_t restored = healed < room ? healed : room;
+      mon->hp += restored;
+      if (restored)
+        popup_number(m->x, m->y, restored, PAL_GREEN);
+    }
+  }
+  return dealt;
 }
 
 static uint16_t monster_damage(const Mob *m) {
@@ -954,9 +992,9 @@ static void update_enemy_bolt(void) {
   }
   if (advance_bolt(&ebolt, 2)) {
     if (hero_occupies(ebolt.x, ebolt.y)) {
-      const Mob *m = mobs + ebolt_mob;
-      hurt_hero(monster_damage(m), true);
-      if (encounter.monsters[m->slot].type == MONSTER_MINDFLAYER &&
+      Mob *m = mobs + ebolt_mob;
+      const uint16_t dealt = hurt_hero_from_mob(m, monster_damage(m), true);
+      if (dealt && encounter.monsters[m->slot].type == MONSTER_MINDFLAYER &&
         (rand() & 3) == 0 && !debug_god_mode)
         hero_stun = 40;
       ebolt.active = false;
@@ -1040,23 +1078,25 @@ static void resolve_attack(Mob *m) {
     if (m->attacks % 3 == 0) {
       fx_start(FX_NOVA, m->x, m->y, DOWN);
       if (dist <= 2)
-        hurt_hero(cap16((uint32_t)monster_damage(m) * 3 / 2), false);
+        hurt_hero_from_mob(m, cap16((uint32_t)monster_damage(m) * 3 / 2), false);
       return;
     }
     break;
   case AI_BREATH:
     if ((dx == 0 || dy == 0) && dist <= 3 && dist > 1) {
       fx_start(FX_NOVA, hero_x(), hero_y(), DOWN);
-      hurt_hero(cap16((uint32_t)monster_damage(m) * 3 / 2), true);
+      hurt_hero_from_mob(m, cap16((uint32_t)monster_damage(m) * 3 / 2), true);
       return;
     }
     break;
   }
 
   if (dist == 1) {
-    hurt_hero(monster_damage(m), false);
-    if ((mon->type == MONSTER_ZOMBIE || mon->type == MONSTER_GELATINOUS_CUBE)
-      && (rand() & 3) == 0 && !debug_god_mode)
+    const uint16_t dealt = hurt_hero_from_mob(m, monster_damage(m), false);
+    if (dealt &&
+      (mon->type == MONSTER_ZOMBIE || mon->type == MONSTER_GELATINOUS_CUBE ||
+        m->affix == ELITE_AFFIX_VENOMOUS) &&
+      (rand() & 3) == 0 && !debug_god_mode)
       hero_poison = 150;
   } else {
     play_sound(sfx_miss);

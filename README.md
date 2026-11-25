@@ -28,8 +28,11 @@ a new character.
   and slow melee, ranged casters, ground slams and dragon breath. Hits push
   enemies back, crits deal double damage, and damage numbers float above
   targets. Some attacks poison or stun.
-* **Elites and bosses.** Some monsters spawn as tougher elites. Every 5th tower
-  floor has a boss, and bosses speed up when badly hurt.
+* **Elites and bosses.** Some monsters spawn as tougher elites with one random
+  combat affix: Berserker (stronger and faster), Ironhide (higher physical and
+  magical defense), Venomous (poison on contact), or Leeching (heals from HP
+  damage dealt). The elite affix is shown in the HUD. Every 5th tower floor has
+  a boss, and bosses speed up when badly hurt.
 * **Loot.** Monsters and treasure chests drop gear with five rarities (Common,
   Magic, Rare, Epic, Legendary) and random bonuses: ATK, DEF, MAT, MDF, AGL,
   HP, SP, critical chance, life steal, gold find and regeneration. You have four
