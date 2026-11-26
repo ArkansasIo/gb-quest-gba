@@ -32,7 +32,11 @@ a new character.
   combat affix: Berserker (stronger and faster), Ironhide (higher physical and
   magical defense), Venomous (poison on contact), or Leeching (heals from HP
   damage dealt). The elite affix is shown in the HUD. Every 5th tower floor has
-  a boss, and bosses speed up when badly hurt.
+  a boss. Bosses transition through four HP phases at 75%, 50% and 25% health;
+  phase changes are announced in the HUD. Later phases shorten attack cooldowns,
+  increase damage, make slams more frequent and wider, and extend dragon-breath
+  reach. Boss windups lengthen with each phase and flash faster, preserving a
+  dodge window before these stronger attacks.
 * **Loot.** Monsters and treasure chests drop gear with five rarities (Common,
   Magic, Rare, Epic, Legendary) and random bonuses: ATK, DEF, MAT, MDF, AGL,
   HP, SP, critical chance, life steal, gold find and regeneration. You have four

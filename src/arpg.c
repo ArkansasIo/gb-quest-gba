@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "arpg.h"
+#include "boss_phases.h"
 #include "core.h"
 #include "encounter.h"
 #include "elite_affixes.h"
@@ -103,6 +104,7 @@ typedef struct Mob {
   uint8_t kind;
   uint8_t rank;      // 0 normal, 1 elite, 2 boss
   uint8_t affix;     // one compact combat modifier for elite monsters
+  uint8_t phase;     // 0 normal/elite, 1-4 boss HP phases
   uint8_t move_cd;
   uint8_t atk_cd;
   uint8_t windup;
@@ -151,6 +153,7 @@ static uint8_t hero_poison;
 static uint8_t tick;
 static uint8_t dodge_cd;
 static uint8_t boss_title_timer;
+static const char *boss_phase_label;
 static uint8_t forced_steps;
 static Direction forced_dir;
 static bool fast;
@@ -471,6 +474,13 @@ static void draw_hud(void) {
   char buf[24];
   char name[12];
   if (boss_title_timer) {
+    if (boss_phase_label) {
+      strncpy(buf, boss_phase_label, 20);
+      buf[20] = 0;
+      core.draw_text(VRAM_WINDOW, buf, 20);
+      hud_dirty = false;
+      return;
+    }
     if (mobs[0].rank == 2 && encounter.monsters[0].name) {
       strncpy(buf, encounter.monsters[0].name, 20);
       buf[20] = 0;
@@ -605,11 +615,6 @@ static uint8_t ai_for(MonsterType type) {
   }
 }
 
-static bool enraged(const Mob *m) {
-  const Monster *mon = encounter.monsters + m->slot;
-  return m->rank == 2 && mon->hp < mon->max_hp / 2;
-}
-
 static uint8_t move_delay(const Mob *m) {
   uint8_t d;
   switch (m->kind) {
@@ -618,15 +623,15 @@ static uint8_t move_delay(const Mob *m) {
   case AI_RANGED: d = 14; break;
   default: d = 10;
   }
-  if (enraged(m))
-    d >>= 1;
+  if (m->rank == 2)
+    d = boss_phase_move_delay(d, m->phase);
   return elite_affix_delay(d, m->affix);
 }
 
 static uint8_t attack_delay(const Mob *m) {
   uint8_t d = m->kind == AI_SLOW ? 90 : 72;
-  if (enraged(m))
-    d -= d / 3;
+  if (m->rank == 2)
+    d = boss_phase_attack_delay(d, m->phase);
   return elite_affix_delay(d, m->affix);
 }
 
@@ -669,6 +674,7 @@ void arpg_begin_encounter(void) BANKED {
 
   memset(mobs, 0, sizeof(mobs));
   boss_title_timer = named_boss ? 120 : 0;
+  boss_phase_label = NULL;
   pbolt.active = false;
   ebolt.active = false;
 
@@ -697,6 +703,7 @@ void arpg_begin_encounter(void) BANKED {
     else if ((rand() & 7) == 0 && (area >= 5 || dungeon))
       m->rank = 1;
 
+    m->phase = m->rank == 2 ? BOSS_PHASE_I : BOSS_PHASE_NONE;
     m->affix = ELITE_AFFIX_NONE;
     if (m->rank == 1) {
       m->affix = (uint8_t)(ELITE_AFFIX_BERSERKER + (rand() & 3));
@@ -820,7 +827,9 @@ static uint16_t hurt_hero_from_mob(Mob *m, uint16_t raw, bool magic) {
 }
 
 static uint16_t monster_damage(const Mob *m) {
-  return rand_vary(m->atk);
+  const uint16_t attack = m->rank == 2 ?
+    boss_phase_damage(m->atk, m->phase) : m->atk;
+  return rand_vary(attack);
 }
 
 static void kill_mob(Mob *m) {
@@ -1056,6 +1065,10 @@ static void begin_attack(Mob *m, uint8_t windup) {
   m->dir = dir_toward(hero_x() - m->x, hero_y() - m->y);
 }
 
+static uint8_t mob_windup(const Mob *m, uint8_t frames) {
+  return m->rank == 2 ? boss_phase_windup(frames, m->phase) : frames;
+}
+
 static void resolve_attack(Mob *m) {
   const int8_t dx = hero_x() - m->x;
   const int8_t dy = hero_y() - m->y;
@@ -1074,21 +1087,29 @@ static void resolve_attack(Mob *m) {
       return;
     }
     break;
-  case AI_SLAM:
-    if (m->attacks % 3 == 0) {
+  case AI_SLAM: {
+    const uint8_t period = m->rank == 2 ?
+      boss_phase_slam_period(m->phase) : 3;
+    if (m->attacks % period == 0) {
+      const uint8_t radius = m->rank == 2 ?
+        boss_phase_slam_radius(m->phase) : 2;
       fx_start(FX_NOVA, m->x, m->y, DOWN);
-      if (dist <= 2)
+      if (dist <= radius)
         hurt_hero_from_mob(m, cap16((uint32_t)monster_damage(m) * 3 / 2), false);
       return;
     }
     break;
-  case AI_BREATH:
-    if ((dx == 0 || dy == 0) && dist <= 3 && dist > 1) {
+  }
+  case AI_BREATH: {
+    const uint8_t range = m->rank == 2 ?
+      boss_phase_breath_range(m->phase) : 3;
+    if ((dx == 0 || dy == 0) && dist <= range && dist > 1) {
       fx_start(FX_NOVA, hero_x(), hero_y(), DOWN);
       hurt_hero_from_mob(m, cap16((uint32_t)monster_damage(m) * 3 / 2), true);
       return;
     }
     break;
+  }
   }
 
   if (dist == 1) {
@@ -1125,6 +1146,17 @@ static void update_mob(Mob *m) {
   }
   if (m->poison) m->poison--;
 
+  if (m->rank == 2) {
+    const Monster *mon = encounter.monsters + m->slot;
+    const uint8_t phase = boss_phase_for_hp(mon->hp, mon->max_hp);
+    if (phase > m->phase) {
+      m->phase = phase;
+      boss_phase_label = boss_phase_title(phase);
+      boss_title_timer = 72;
+      hud_dirty = true;
+    }
+  }
+
   if (m->stun) {
     m->stun--;
     return;
@@ -1148,20 +1180,27 @@ static void update_mob(Mob *m) {
   const bool aligned = dx == 0 || dy == 0;
 
   if (dist == 1 && !m->atk_cd) {
-    begin_attack(m, (m->kind == AI_SLAM && m->attacks % 3 == 2) ?
-      WINDUP_FRAMES + 14 : WINDUP_FRAMES);
+    uint8_t windup = WINDUP_FRAMES;
+    if (m->kind == AI_SLAM) {
+      const uint8_t period = m->rank == 2 ?
+        boss_phase_slam_period(m->phase) : 3;
+      if (m->attacks % period == period - 1)
+        windup += 14;
+    }
+    begin_attack(m, mob_windup(m, windup));
     return;
   }
 
   if (m->kind == AI_RANGED && aligned && dist >= 2 && dist <= 4 &&
     !m->atk_cd && !ebolt.active) {
-    begin_attack(m, WINDUP_FRAMES);
+    begin_attack(m, mob_windup(m, WINDUP_FRAMES));
     return;
   }
 
-  if (m->kind == AI_BREATH && aligned && dist >= 2 && dist <= 3 &&
+  if (m->kind == AI_BREATH && aligned && dist >= 2 &&
+    dist <= (m->rank == 2 ? boss_phase_breath_range(m->phase) : 3) &&
     !m->atk_cd) {
-    begin_attack(m, WINDUP_FRAMES + 16);
+    begin_attack(m, mob_windup(m, WINDUP_FRAMES + 16));
     return;
   }
 
@@ -1184,7 +1223,8 @@ static void update_mob(Mob *m) {
 static void draw_mob(const Mob *m, uint8_t index) {
   const uint8_t spr = SPR_MOB0 + 4 * index;
   uint8_t sx, sy;
-  const bool blink = (m->windup && (tick & 4)) || (m->stun && (tick & 8));
+  const bool blink = (m->windup &&
+    (m->rank == 2 ? (tick & 2) : (tick & 4))) || (m->stun && (tick & 8));
   if (!m->active || !to_screen(m->x, m->y, m->px, m->py, &sx, &sy)) {
     hide_spr(spr, 4);
     return;
