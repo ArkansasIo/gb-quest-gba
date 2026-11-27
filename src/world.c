@@ -616,7 +616,7 @@ static void generate_zone(uint8_t z) {
   }
 
   if (z == WORLD_BOSS_ZONE && gen_signs[0].map_id == END) {
-    strcpy(sign_text, "Wyrmstone\\nA World Wyrm\\nawaits the worthy.");
+    strcpy(sign_text, "Wyrmstone\nA World Wyrm\nawaits the worthy.");
     put(mx - 1, my - 2, T_SIGN, A_WALL, 0);
     gen_signs[0].map_id = 0;
     gen_signs[0].col = mx - 1;
