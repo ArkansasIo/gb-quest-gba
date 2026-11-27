@@ -36,7 +36,11 @@ a new character.
   phase changes are announced in the HUD. Later phases shorten attack cooldowns,
   increase damage, make slams more frequent and wider, and extend dragon-breath
   reach. Boss windups lengthen with each phase and flash faster, preserving a
-  dodge window before these stronger attacks.
+  dodge window before these stronger attacks. The level-600 Wyrmstone zone
+  also hosts a repeatable World Wyrm encounter: heroes within 80 levels of the
+  zone trigger it on their first step after entering. The Wyrm has enhanced
+  attack and defense and grants double boss XP; leaving and re-entering resets
+  the event, so no clock or network connection is required.
 * **Loot.** Monsters and treasure chests drop gear with five rarities (Common,
   Magic, Rare, Epic, Legendary) and random bonuses: ATK, DEF, MAT, MDF, AGL,
   HP, SP, critical chance, life steal, gold find and regeneration. You have four

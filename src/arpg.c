@@ -35,6 +35,7 @@
 #include "stats.h"
 #include "textbox.h"
 #include "world.h"
+#include "world_boss.h"
 
 extern Direction move_direction;
 extern uint8_t move_step;
@@ -105,6 +106,7 @@ typedef struct Mob {
   uint8_t rank;      // 0 normal, 1 elite, 2 boss
   uint8_t affix;     // one compact combat modifier for elite monsters
   uint8_t phase;     // 0 normal/elite, 1-4 boss HP phases
+  bool world_boss;    // receives the overworld event bonus and reward
   uint8_t move_cd;
   uint8_t atk_cd;
   uint8_t windup;
@@ -668,9 +670,12 @@ void arpg_begin_encounter(void) BANKED {
   const bool boss_fight = encounter.is_final_boss;
   const bool dungeon = world_location() == WORLD_LOC_DUNGEON;
   const WorldLocation location = world_location();
-  const bool named_boss = (location == WORLD_LOC_TOWER ||
-    location == WORLD_LOC_RAID) && encounter.monsters[0].exp_tier == S_TIER;
   const uint16_t area = world_area_level();
+  const bool world_boss = location == WORLD_LOC_ZONE &&
+    world_boss_zone_eligible(world_current_zone(), hero_level, area) &&
+    encounter.monsters[0].exp_tier == S_TIER;
+  const bool named_boss = world_boss || ((location == WORLD_LOC_TOWER ||
+    location == WORLD_LOC_RAID) && encounter.monsters[0].exp_tier == S_TIER);
 
   memset(mobs, 0, sizeof(mobs));
   boss_title_timer = named_boss ? 120 : 0;
@@ -704,6 +709,7 @@ void arpg_begin_encounter(void) BANKED {
       m->rank = 1;
 
     m->phase = m->rank == 2 ? BOSS_PHASE_I : BOSS_PHASE_NONE;
+    m->world_boss = world_boss && k == 0;
     m->affix = ELITE_AFFIX_NONE;
     if (m->rank == 1) {
       m->affix = (uint8_t)(ELITE_AFFIX_BERSERKER + (rand() & 3));
@@ -726,6 +732,11 @@ void arpg_begin_encounter(void) BANKED {
 
     MobStats st;
     monster_stats(mon->type, mon->exp_tier, m->rank, lvl, &st);
+    if (m->world_boss) {
+      st.atk = world_boss_attack(st.atk);
+      st.def = world_boss_defense(st.def);
+      st.mdef = world_boss_defense(st.mdef);
+    }
     mon->max_hp = st.hp;
     mon->hp = st.hp;
     m->atk = elite_affix_attack(st.atk, m->affix);
@@ -840,7 +851,10 @@ static void kill_mob(Mob *m) {
   play_sound(sfx_monster_death);
   fx_start(FX_SPARK, m->x, m->y, DOWN);
 
-  xp_gain += monster_xp(m->level, mon->exp_tier, m->rank);
+  uint32_t xp = monster_xp(m->level, mon->exp_tier, m->rank);
+  if (m->world_boss)
+    xp = world_boss_reward_xp(xp);
+  xp_gain += xp;
 
   quest_event(QUEST_EVENT_KILL, mon->type);
   if (m->rank == 1)

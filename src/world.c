@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include "world.h"
+#include "world_boss.h"
 #include "core.h"
 #include "encounter.h"
 #include "floor.h"
@@ -71,6 +72,7 @@ static bool gather_opened;
 static bool floor_boss_pending;
 static bool raid_boss_pending;
 static bool deep_boss_pending;
+static bool world_boss_pending;
 
 // Empty object lists (read while this bank is mapped by the floor loader).
 static const Chest no_chests[] = { { END } };
@@ -471,6 +473,7 @@ static uint8_t trail_destination(uint8_t zone_id) {
 }
 
 static void generate_zone(uint8_t z) {
+  world_boss_pending = false;
   const uint8_t biome = zone_biome(z);
   const bool town = zone_is_town(z);
   const uint8_t w = WORLD_MAP_W;
@@ -612,10 +615,22 @@ static void generate_zone(uint8_t z) {
     }
   }
 
+  if (z == WORLD_BOSS_ZONE && gen_signs[0].map_id == END) {
+    strcpy(sign_text, "Wyrmstone\\nA World Wyrm\\nawaits the worthy.");
+    put(mx - 1, my - 2, T_SIGN, A_WALL, 0);
+    gen_signs[0].map_id = 0;
+    gen_signs[0].col = mx - 1;
+    gen_signs[0].row = my - 2;
+    gen_signs[0].facing = UP;
+    gen_signs[0].message = sign_text;
+    gen_signs[1].map_id = END;
+  }
+
   area_biome = biome;
   area_town = town;
   area_level = zone_level(z);
   location = WORLD_LOC_ZONE;
+  world_boss_pending = world_boss_zone_eligible(z, hero_level, area_level);
   world_visited[z >> 3] |= 1 << (z & 7);
   if (town) {
     world_last_town = z;
@@ -882,12 +897,32 @@ static void build_deep_boss_encounter(void) {
   encounter.monsters[0].name = sign_text;
 }
 
+static void build_world_boss_encounter(void) {
+  EncounterTable *t = gen_table;
+  t->odds = 254;
+  t->layout = MONSTER_LAYOUT_1;
+  t->monster1 = MONSTER_DRAGON;
+  t->monster1_level = vary_level(area_level);
+  t->monster1_tier = S_TIER;
+  (t + 1)->odds = END;
+  generate_encounter(gen_table);
+  strcpy(sign_text, "Wyrmstone World Wyrm");
+  encounter.monsters[0].name = sign_text;
+  encounter.is_final_boss = false;
+}
+
 /**
  * Floor callback: called after each step.
  */
 static bool gen_on_move(void) {
   if (area_town)
     return false;
+  if (world_boss_pending) {
+    world_boss_pending = false;
+    build_world_boss_encounter();
+    start_battle();
+    return true;
+  }
   if (!check_random_encounter())
     return false;
   build_random_encounter();
@@ -1007,6 +1042,8 @@ void world_enter_zone(uint8_t zone_id) BANKED {
 
 FloorBank *world_prepare_floor(FloorBank *f) BANKED {
   setup_banks();
+  if (f != &world_fb)
+    world_boss_pending = false;
 
   if (f == &world_fb) {
     if (direct_entry) {
