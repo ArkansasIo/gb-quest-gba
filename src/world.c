@@ -46,6 +46,7 @@ static Exit gen_exits[8];
 static Sign gen_signs[2];
 static uint8_t gen_map_data[WORLD_MAP_W * WORLD_MAP_H * 2];
 static char sign_text[72];
+static char world_boss_sign_text[48];
 
 static uint8_t current_zone = WORLD_START_ZONE;
 static WorldLocation location = WORLD_LOC_ZONE;
@@ -616,13 +617,13 @@ static void generate_zone(uint8_t z) {
   }
 
   if (z == WORLD_BOSS_ZONE && gen_signs[0].map_id == END) {
-    strcpy(sign_text, "Wyrmstone\nA World Wyrm\nawaits the worthy.");
+    strcpy(world_boss_sign_text, "Wyrmstone\nA World Wyrm\nawaits the worthy.");
     put(mx - 1, my - 2, T_SIGN, A_WALL, 0);
     gen_signs[0].map_id = 0;
     gen_signs[0].col = mx - 1;
     gen_signs[0].row = my - 2;
     gen_signs[0].facing = UP;
-    gen_signs[0].message = sign_text;
+    gen_signs[0].message = world_boss_sign_text;
     gen_signs[1].map_id = END;
   }
 
